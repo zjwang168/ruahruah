@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import FamilyNav from '@/components/FamilyNav'
 import { INTERNAL_NOTIFICATION_TYPE, isActionNotification } from '@/lib/notifications'
+import { SELECTABLE_SERVICE_IDS } from '@/lib/services'
 
 const SERVICE_LABELS: Record<string, string> = {
   childcare: '👶 Childcare',
@@ -17,7 +18,10 @@ const SERVICE_LABELS: Record<string, string> = {
   postpartum: '🌸 Postpartum',
 }
 
-const ALL_SERVICES = Object.keys(SERVICE_LABELS)
+// What a family can add today — childcare only. SERVICE_LABELS above stays
+// complete on purpose, so a service chosen before the childcare focus still
+// renders as words rather than a raw enum value.
+const ALL_SERVICES = SELECTABLE_SERVICE_IDS
 
 export default function FamilyDashboard() {
   const [user, setUser] = useState<any>(null)
@@ -255,7 +259,7 @@ export default function FamilyDashboard() {
               style={{ background: 'linear-gradient(135deg, #7FB3FF 0%, #A78BFA 100%)', boxShadow: '0 8px 32px rgba(127, 179, 255, 0.3)' }}>
               <div className="text-2xl mb-2">✍️</div>
               <div className="font-semibold text-white">Post a Request</div>
-              <div className="text-sm text-white/70 mt-1">Nanny, babysitter, pet care & more</div>
+              <div className="text-sm text-white/70 mt-1">Full-time, after-school, or the occasional evening</div>
             </button>
           )}
 

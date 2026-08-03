@@ -3,15 +3,9 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { SELECTABLE_SERVICES, SERVICE_FOCUS_NOTE } from '@/lib/services'
 
-const SERVICE_TYPES = [
-  { id: 'childcare', label: '👶 Child Care' },
-  { id: 'tutoring', label: '📚 Tutoring' },
-  { id: 'elder_care', label: '👴 Elder Care' },
-  { id: 'pet_care', label: '🐾 Pet Care' },
-  { id: 'housekeeping', label: '🏠 Housekeeping' },
-  { id: 'chef', label: '🍳 Private Chef' },
-]
+const SERVICE_TYPES = SELECTABLE_SERVICES.map(s => ({ id: s.id, label: `${s.emoji} ${s.label}` }))
 
 export default function CaregiverOnboarding() {
   const [step, setStep] = useState(1)
@@ -63,9 +57,9 @@ export default function CaregiverOnboarding() {
         {/* Step 1: 服务类型 */}
         {step === 1 && (
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-1">What services do you offer?</h2>
-            <p className="text-gray-500 text-sm mb-6">Select all that apply</p>
-            <div className="grid grid-cols-2 gap-3 mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-1">What kind of care do you provide?</h2>
+            <p className="text-gray-500 text-sm mb-6">{SERVICE_FOCUS_NOTE}</p>
+            <div className={`grid gap-3 mb-8 ${SERVICE_TYPES.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
               {SERVICE_TYPES.map(s => (
                 <button
                   key={s.id}

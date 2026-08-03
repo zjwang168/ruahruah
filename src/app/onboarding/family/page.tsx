@@ -3,14 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-const SERVICES = [
-  { id: 'childcare', emoji: '👶', label: 'Childcare', desc: 'Nanny or babysitter' },
-  { id: 'chef', emoji: '🍳', label: 'Home Private Chef', desc: 'Meal prep & cooking' },
-  { id: 'housekeeping', emoji: '🏠', label: 'Housekeeper', desc: 'Cleaning & household help' },
-  { id: 'elder_care', emoji: '👴', label: 'Elder Care', desc: 'Senior companion & care' },
-  { id: 'pet_care', emoji: '🐾', label: 'Pet Care', desc: 'Dog walking & pet sitting' },
-  { id: 'tutoring', emoji: '📚', label: 'Learning Support', desc: 'Tutoring & education' },
-]
+import { SELECTABLE_SERVICES, SERVICE_FOCUS_NOTE } from '@/lib/services'
+
+const SERVICES = SELECTABLE_SERVICES
 
 type Answers = Record<string, any>
 
@@ -103,9 +98,9 @@ export default function FamilyOnboarding() {
         {step === 'services' && (
           <div>
             <button onClick={() => router.push('/')} className="text-gray-400 text-sm mb-8 hover:text-gray-600">← Back</button>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">What do you need help with?</h1>
-            <p className="text-gray-400 text-sm mb-8">Select all that apply</p>
-            <div className="grid grid-cols-2 gap-3 mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">What kind of care do you need?</h1>
+            <p className="text-gray-400 text-sm mb-8">{SERVICE_FOCUS_NOTE}</p>
+            <div className={`grid gap-3 mb-8 ${SERVICES.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
               {SERVICES.map(s => (
                 <button key={s.id} onClick={() => toggleService(s.id)}
                   className={`p-4 rounded-2xl border-2 text-left transition ${selectedServices.includes(s.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>

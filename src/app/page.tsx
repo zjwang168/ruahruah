@@ -47,7 +47,7 @@ export default function Home() {
                 <span className="text-[#7FB3FF]">without the stress.</span>
               </h1>
               <p className="text-gray-500 text-lg mb-8 leading-relaxed">
-                We match your family with the right caregiver automatically. From childcare to private chefs — care that feels right.
+                We match your family with the right caregiver automatically. Nannies, babysitters, after-school and newborn care — childcare that feels right.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <button onClick={() => router.push('/onboarding/family')}
@@ -122,17 +122,17 @@ export default function Home() {
       <section className="py-20 px-6 bg-[#FAFCFF]">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">Care for every need</h2>
-            <p className="text-gray-400">From daily help to special occasions</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">Childcare, however you need it</h2>
+            <p className="text-gray-400">From full-time help to the occasional evening</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[
-              { emoji: '👶', label: 'Childcare', desc: 'Nannies & babysitters', color: 'bg-blue-50' },
-              { emoji: '🍳', label: 'Private Chef', desc: 'Meal prep & cooking', color: 'bg-orange-50' },
-              { emoji: '🏠', label: 'Housekeeper', desc: 'Cleaning & organizing', color: 'bg-green-50' },
-              { emoji: '👴', label: 'Elder Care', desc: 'Companion & support', color: 'bg-purple-50' },
-              { emoji: '🐾', label: 'Pet Care', desc: 'Walking & sitting', color: 'bg-yellow-50' },
-              { emoji: '📚', label: 'Learning Support', desc: 'Tutoring & mentoring', color: 'bg-pink-50' },
+              { emoji: '👶', label: 'Full-time nanny', desc: 'Weekday care in your home', color: 'bg-blue-50' },
+              { emoji: '🎒', label: 'After school', desc: 'Pickup, homework, dinner', color: 'bg-orange-50' },
+              { emoji: '🌙', label: 'Evenings & weekends', desc: 'Date nights and one-offs', color: 'bg-green-50' },
+              { emoji: '🍼', label: 'Newborn support', desc: 'The first months at home', color: 'bg-purple-50' },
+              { emoji: '🗣', label: 'Bilingual care', desc: 'Mandarin, Cantonese, Spanish', color: 'bg-yellow-50' },
+              { emoji: '☀️', label: 'School breaks', desc: 'Holidays and summer', color: 'bg-pink-50' },
             ].map(s => (
               <button key={s.label} onClick={() => router.push('/onboarding/family')}
                 className={`${s.color} p-6 rounded-2xl text-left hover:scale-[1.02] transition-transform`}>
@@ -198,22 +198,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="py-10 px-6 border-t border-gray-100">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img src="/ruah-logo.png" alt="Ruah" className="w-7 h-7" />
-            <span className="text-[#7FB3FF] font-bold">Ruah！</span>
-          </div>
-          <div className="text-gray-400 text-sm">© 2025 Ruah! All rights reserved.</div>
-          <div className="flex gap-6 text-sm text-gray-400">
-            <Link href="/privacy" className="hover:text-gray-600">Privacy</Link>
-            <Link href="/terms" className="hover:text-gray-600">Terms</Link>
-            <Link href="/trust" className="hover:text-gray-600">Trust &amp; Safety</Link>
-            <a href="mailto:zijinwang168@gmail.com" className="hover:text-gray-600">Contact</a>
-          </div>
-        </div>
-      </footer>
+      {/* Site footer (privacy / terms / trust) comes from the root layout. */}
 
       <style jsx global>{`
         @keyframes float {

@@ -112,15 +112,9 @@ export function LegalDoc({
           ))}
         </div>
 
-        <div className="mt-12 pt-6 border-t border-line flex flex-wrap gap-6 text-sm">
+        <div className="mt-12 pt-6 border-t border-line text-sm">
           <Link href="/" className="text-brand-strong hover:underline">
             ← Back to Ruah
-          </Link>
-          <Link href="/privacy" className="text-brand-strong hover:underline">
-            Privacy Policy
-          </Link>
-          <Link href="/terms" className="text-brand-strong hover:underline">
-            Terms of Service
           </Link>
         </div>
       </div>

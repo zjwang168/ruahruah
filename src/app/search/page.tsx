@@ -4,14 +4,9 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
-const SERVICE_OPTIONS = [
-  { value: 'childcare', label: 'Childcare' },
-  { value: 'elder_care', label: 'Senior Care' },
-  { value: 'housekeeping', label: 'Housekeeping' },
-  { value: 'chef', label: 'Personal Chef' },
-  { value: 'pet_care', label: 'Pet Care' },
-  { value: 'tutoring', label: 'Tutoring' },
-]
+import { SELECTABLE_SERVICES } from '@/lib/services'
+
+const SERVICE_OPTIONS = SELECTABLE_SERVICES.map(s => ({ value: s.id, label: s.label }))
 
 const LANGUAGE_OPTIONS = ['English', 'Mandarin', 'Spanish', 'French']
 

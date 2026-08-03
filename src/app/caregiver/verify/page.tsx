@@ -138,7 +138,7 @@ export default function CaregiverVerifyPage() {
         <div className="max-w-2xl mx-auto px-6 py-16 text-center">
           <div className="text-5xl mb-4">⏳</div>
           <h1 className="text-xl font-bold text-gray-900 mb-2">Under review</h1>
-          <p className="text-sm text-gray-500">We've received your documents and will review them within 24 hours. You'll get a notification once you're verified.</p>
+          <p className="text-sm text-gray-500">We've received your documents. A person on our team reviews them by hand, typically within 1–2 business days. You'll get a notification once you're verified.</p>
           <button onClick={() => router.push('/caregiver/dashboard')}
             className="mt-6 text-white px-6 py-3 rounded-xl text-sm font-semibold"
             style={{ background: 'linear-gradient(135deg, #7FB3FF 0%, #A78BFA 100%)' }}>
@@ -262,7 +262,7 @@ export default function CaregiverVerifyPage() {
         {/* Privacy note */}
         <div className="bg-gray-50 rounded-xl p-4 mb-6">
           <p className="text-xs text-gray-500 leading-relaxed">
-            🔒 Your photos are stored securely and are only visible to the Ruah team for verification. We never share them with families or third parties. Review takes up to 24 hours.{' '}
+            🔒 Your photos are stored securely and are only visible to the Ruah team for verification. We never share them with families or third parties. Review typically takes 1–2 business days.{' '}
             <a href="/privacy" target="_blank" className="text-[#7FB3FF] underline">Privacy Policy</a>
           </p>
         </div>

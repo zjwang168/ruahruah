@@ -3,15 +3,13 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { SELECTABLE_SERVICES, SERVICE_FOCUS_NOTE } from '@/lib/services'
 
-const SERVICE_TYPES = [
-  { id: 'childcare', label: '👶 Child Care', desc: 'Nanny, babysitter, au pair' },
-  { id: 'tutoring', label: '📚 Tutoring', desc: 'Academic support, language learning' },
-  { id: 'elder_care', label: '👴 Elder Care', desc: 'Senior companion, caregiver' },
-  { id: 'pet_care', label: '🐾 Pet Care', desc: 'Dog walking, pet sitting' },
-  { id: 'housekeeping', label: '🏠 Housekeeping', desc: 'Cleaning, household help' },
-  { id: 'chef', label: '🍳 Private Chef', desc: 'Meal prep, cooking' },
-]
+const SERVICE_TYPES = SELECTABLE_SERVICES.map(s => ({
+  id: s.id,
+  label: `${s.emoji} ${s.label}`,
+  desc: s.desc,
+}))
 
 export default function FamilyOnboarding() {
   const [step, setStep] = useState(1)
@@ -60,9 +58,9 @@ export default function FamilyOnboarding() {
         {/* Step 1: 选服务 */}
         {step === 1 && (
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-1">What do you need help with?</h2>
-            <p className="text-gray-500 text-sm mb-6">Select all that apply</p>
-            <div className="grid grid-cols-2 gap-3 mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-1">What kind of care do you need?</h2>
+            <p className="text-gray-500 text-sm mb-6">{SERVICE_FOCUS_NOTE}</p>
+            <div className={`grid gap-3 mb-8 ${SERVICE_TYPES.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
               {SERVICE_TYPES.map(s => (
                 <button
                   key={s.id}

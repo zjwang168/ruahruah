@@ -4,14 +4,9 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-const SERVICE_OPTIONS = [
-  { value: 'childcare', label: 'Childcare' },
-  { value: 'elder_care', label: 'Senior Care' },
-  { value: 'housekeeping', label: 'Housekeeping' },
-  { value: 'chef', label: 'Personal Chef' },
-  { value: 'pet_care', label: 'Pet Care' },
-  { value: 'tutoring', label: 'Tutoring' },
-]
+import { SELECTABLE_SERVICES } from '@/lib/services'
+
+const SERVICE_OPTIONS = SELECTABLE_SERVICES.map(s => ({ value: s.id, label: s.label }))
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
@@ -686,7 +681,7 @@ function PostRequestContent() {
                 ) : '🚀 Post & Notify Ruah Team'}
               </button>
             </div>
-            <p className="text-center text-xs text-gray-400 mt-4">Our team will review and match you with the best caregivers within 24 hours.</p>
+            <p className="text-center text-xs text-gray-400 mt-4">We'll review your request and start reaching out to caregivers, typically within 1–2 business days.</p>
           </>
         )}
       </div>
