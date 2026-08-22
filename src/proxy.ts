@@ -1,6 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { isAdminEmail } from '@/lib/admin/emails'
+import {
+  isLocale,
+  LOCALE_COOKIE,
+  LOCALE_COOKIE_MAX_AGE,
+  LOCALE_QUERY_PARAM,
+} from '@/lib/i18n/config'
 
 // Caregiver-only private subpages. Everything else under /caregiver/ (e.g. /caregiver/{uuid})
 // is a public profile page that families need to view, so it is NOT restricted.
@@ -10,6 +16,28 @@ const CAREGIVER_PRIVATE_PAGES = [
 ]
 
 export async function proxy(request: NextRequest) {
+  // ?lang=zh pins the language, persists it in the cookie, and vanishes from
+  // the URL. This is what a link shared into a WeChat group or printed as a QR
+  // code carries: the reader lands in their language on the first byte and
+  // never has to find the toggle. Any other query params (?src=... campaign
+  // tags) are preserved through the redirect.
+  //
+  // Runs before the Supabase client on purpose — it must work for a signed-out
+  // visitor, and the redirected request does the auth refresh a moment later.
+  // API routes are exempt: redirecting a fetch that expects JSON breaks it.
+  const requestedLocale = request.nextUrl.searchParams.get(LOCALE_QUERY_PARAM)
+  if (isLocale(requestedLocale) && !request.nextUrl.pathname.startsWith('/api/')) {
+    const cleanUrl = request.nextUrl.clone()
+    cleanUrl.searchParams.delete(LOCALE_QUERY_PARAM)
+    const localeResponse = NextResponse.redirect(cleanUrl)
+    localeResponse.cookies.set(LOCALE_COOKIE, requestedLocale, {
+      path: '/',
+      maxAge: LOCALE_COOKIE_MAX_AGE,
+      sameSite: 'lax',
+    })
+    return localeResponse
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(

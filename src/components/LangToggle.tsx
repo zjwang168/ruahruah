@@ -18,7 +18,7 @@ export default function LangToggle({ className = '' }: { className?: string }) {
     <div
       role="group"
       aria-label={t('lang.switchTo')}
-      className={`inline-flex items-center rounded-full border border-gray-200 bg-white/70 p-0.5 ${className}`}
+      className={`inline-flex shrink-0 items-center rounded-full border border-gray-200 bg-white/70 p-0.5 ${className}`}
     >
       {LOCALES.map(code => {
         const active = code === locale
@@ -29,7 +29,7 @@ export default function LangToggle({ className = '' }: { className?: string }) {
             onClick={() => setLocale(code)}
             aria-pressed={active}
             lang={code === 'zh' ? 'zh-CN' : 'en'}
-            className={`px-2.5 py-1 text-xs font-medium rounded-full transition ${
+            className={`px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap transition ${
               active
                 ? 'bg-[#7FB3FF] text-white'
                 : 'text-gray-500 hover:text-gray-800'

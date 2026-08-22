@@ -45,17 +45,21 @@ export default function Home() {
 
       {/* NAV */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur shadow-sm' : 'bg-transparent'}`}>
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/ruah-logo.png" alt="Ruah" className="w-9 h-9" />
-            <span className="text-xl font-bold text-[#7FB3FF]">Ruah！</span>
+        {/* Four items on a 360px phone is the tightest row on the site, and the
+            language switch — the one control a Chinese visitor arriving from a
+            shared link needs — was the thing being crushed. Everything shrinks a
+            step below sm and nothing is allowed to shrink into its neighbour. */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 shrink-0">
+            <img src="/ruah-logo.png" alt="Ruah" className="w-8 h-8 sm:w-9 sm:h-9" />
+            <span className="text-lg sm:text-xl font-bold text-[#7FB3FF]">Ruah！</span>
           </div>
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <LangToggle />
             <button onClick={() => router.push('/login')} className="text-sm text-gray-500 hover:text-gray-800 transition whitespace-nowrap">
               {t('nav.signin')}
             </button>
-            <button onClick={() => router.push('/onboarding/family')} className="btn-primary text-white px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">
+            <button onClick={() => router.push('/onboarding/family')} className="btn-primary text-white px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full text-sm font-medium whitespace-nowrap">
               {t('nav.getStarted')}
             </button>
           </div>
@@ -112,17 +116,24 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="absolute -top-2 -right-4 bg-white rounded-2xl shadow-md p-3 animate-float-slow">
-                  <div className="text-xs text-gray-500">{t('home.card.matchFound')}</div>
-                  <div className="text-sm font-semibold text-gray-800">{t('home.card.matchName')}</div>
-                  <div className="text-xs text-[#7FB3FF]">{t('home.card.matchMeta')}</div>
+                {/* The two cards show what Ruah DOES, not a caregiver. There is no
+                    rating system and no real Sarah Chen; both used to be on this card.
+                    max-w keeps the longer Chinese from pushing the card off a phone. */}
+                <div className="absolute -top-2 -right-4 max-w-[11rem] bg-white rounded-2xl shadow-md p-3 animate-float-slow">
+                  <div className="text-xs text-gray-500 mb-1">{t('home.card.working.label')}</div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 bg-[#7FB3FF] rounded-full animate-pulse shrink-0" />
+                    <div className="text-xs font-medium text-gray-800">{t('home.card.working.value')}</div>
+                  </div>
                 </div>
 
-                <div className="absolute -bottom-2 -left-4 bg-white rounded-2xl shadow-md p-3 animate-float-delay">
-                  <div className="text-xs text-gray-500 mb-1">{t('home.card.checkLabel')}</div>
+                {/* Wording is bounded by what /trust claims: a government ID checked
+                    against a selfie, by hand. Never "background check". */}
+                <div className="absolute -bottom-2 -left-4 max-w-[11rem] bg-white rounded-2xl shadow-md p-3 animate-float-delay">
+                  <div className="text-xs text-gray-500 mb-1">{t('home.card.verified.label')}</div>
                   <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-green-400 rounded-full" />
-                    <div className="text-xs font-medium text-green-600">{t('home.card.checkValue')}</div>
+                    <div className="w-2 h-2 bg-green-400 rounded-full shrink-0" />
+                    <div className="text-xs font-medium text-green-600">{t('home.card.verified.value')}</div>
                   </div>
                 </div>
               </div>

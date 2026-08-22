@@ -27,6 +27,14 @@ export const en = {
   'nav.getStarted': 'Get started',
   'lang.switchTo': 'Switch language',
 
+  // ── <head> / share card ──
+  // These are what a link unfurls as in a group chat, so they are the first
+  // Ruah sentence most people ever read. Resolved server-side in layout.tsx
+  // from the request locale — see generateMetadata there.
+  'meta.title': 'Ruah — childcare for DC families, without the chasing',
+  'meta.description':
+    'Tell us what your family needs. Ruah reaches out to caregivers, follows up, and reports back — so you are not the one chasing replies.',
+
   // ── hero ──
   'home.hero.badge': '✨ AI-powered family care',
   'home.hero.line1': 'Find trusted care',
@@ -36,17 +44,25 @@ export const en = {
     'We match your family with the right caregiver automatically. Nannies, babysitters, after-school and newborn care — childcare that feels right.',
   'home.hero.ctaFamily': 'Find a caregiver →',
   'home.hero.ctaCaregiver': "I'm a caregiver",
-  'home.hero.assurances': '✓ Free to browse   ✓ Verified caregivers   ✓ No commitment',
+  'home.hero.assurances': '✓ Free to browse   ✓ ID-checked caregivers   ✓ No commitment',
   'home.hero.humanPrompt': 'Prefer to start with a human?',
   'home.hero.humanLink': 'Book 30 minutes with the Ruah Team →',
 
   // ── hero visual ──
+  // The two floating cards illustrate what Ruah DOES — it is the one thing
+  // families cannot get from a directory. They deliberately show no caregiver,
+  // no name and no rating: there is no rating system, and a fabricated person
+  // on the landing page is the kind of detail that gets screenshotted.
+  //
+  // "Background check / Verified" used to live here and directly contradicted
+  // /trust, which states that no badge on this platform means anyone has been
+  // background checked. Wording here must stay inside what /trust claims: we
+  // check a government ID against a selfie, by hand, and nothing more.
   'home.card.greeting': "Hi! I'm Ruah! 👋",
-  'home.card.matchFound': 'Match found! 🎉',
-  'home.card.matchName': 'Sarah Chen',
-  'home.card.matchMeta': '⭐ 4.9 · Mandarin speaker',
-  'home.card.checkLabel': 'Background check',
-  'home.card.checkValue': 'Verified ✓',
+  'home.card.working.label': 'Ruah is on it',
+  'home.card.working.value': 'Reaching out to caregivers…',
+  'home.card.verified.label': 'Verified caregiver',
+  'home.card.verified.value': 'ID + selfie checked ✓',
 
   // ── how it works ──
   'home.how.title': 'How Ruah works',
@@ -103,6 +119,10 @@ export type MessageKey = keyof typeof en
 
 // The annotation is the whole point: drop a key here and `tsc` fails.
 export const zh: Record<MessageKey, string> = {
+  'meta.title': 'Ruah — 华府家庭找照护者，不用自己追着问',
+  'meta.description':
+    '告诉我们家里需要什么。Ruah 替你联系照护者、替你追进度、把结果告诉你，不用你一条条去催。',
+
   'nav.signin': '登录',
   'nav.getStarted': '开始使用',
   'lang.switchTo': '切换语言',
@@ -115,16 +135,15 @@ export const zh: Record<MessageKey, string> = {
     '我们自动为你匹配合适的照护者。住家保姆、临时看护、放学接送、新生儿照料 —— 让人安心的托育。',
   'home.hero.ctaFamily': '找照护者 →',
   'home.hero.ctaCaregiver': '我是照护者',
-  'home.hero.assurances': '✓ 免费浏览   ✓ 照护者已验证   ✓ 无需承诺',
+  'home.hero.assurances': '✓ 免费浏览   ✓ 照护者已核验证件   ✓ 无需承诺',
   'home.hero.humanPrompt': '想先和真人聊聊？',
   'home.hero.humanLink': '预约 Ruah 团队 30 分钟 →',
 
   'home.card.greeting': '你好，我是 Ruah！👋',
-  'home.card.matchFound': '匹配成功！🎉',
-  'home.card.matchName': 'Sarah Chen',
-  'home.card.matchMeta': '⭐ 4.9 · 会说普通话',
-  'home.card.checkLabel': '背景调查',
-  'home.card.checkValue': '已验证 ✓',
+  'home.card.working.label': 'Ruah 正在跟进',
+  'home.card.working.value': '正在替你联系照护者…',
+  'home.card.verified.label': '已核验的照护者',
+  'home.card.verified.value': '证件与自拍已核对 ✓',
 
   'home.how.title': 'Ruah 如何运作',
   'home.how.sub': '简单、快速、不操心',
