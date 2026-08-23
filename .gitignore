@@ -24,6 +24,11 @@
 .DS_Store
 *.pem
 
+# editors — IDE settings are per-developer, not per-project. The ruahruah
+# fork had .idea/ committed by accident; this keeps it from happening again.
+.idea/
+.vscode/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
