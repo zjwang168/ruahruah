@@ -76,25 +76,10 @@ export const en = {
   'home.how.3.title': 'Meet & hire',
   'home.how.3.desc': 'Connect with your top matches, chat, and hire — all in one place.',
 
-  // ── services ──
-  'home.services.title': 'Childcare, however you need it',
-  'home.services.sub': 'From full-time help to the occasional evening',
-  'home.services.fulltime.label': 'Full-time nanny',
-  'home.services.fulltime.desc': 'Weekday care in your home',
-  'home.services.afterschool.label': 'After school',
-  'home.services.afterschool.desc': 'Pickup, homework, dinner',
-  'home.services.evenings.label': 'Evenings & weekends',
-  'home.services.evenings.desc': 'Date nights and one-offs',
-  'home.services.newborn.label': 'Newborn support',
-  'home.services.newborn.desc': 'The first months at home',
-  'home.services.bilingual.label': 'Bilingual care',
-  'home.services.bilingual.desc': 'Mandarin, Cantonese, Spanish',
-  'home.services.breaks.label': 'School breaks',
-  'home.services.breaks.desc': 'Holidays and summer',
-
   // ── trust ──
-  'home.trust.title': 'How we handle trust',
-  'home.trust.sub': "What we check, and what we don't. In plain terms.",
+  'home.trust.title': "We don't run background checks.",
+  'home.trust.sub':
+    'No badge on this platform means anyone has been checked for a criminal record. We have not checked, so we will not let a tick mark carry a meaning it has not earned. Here is what we do check:',
   'home.trust.identity.title': 'Identity verified',
   'home.trust.identity.desc':
     'Every verified caregiver has had a government ID and a selfie checked by a person on our team.',
@@ -104,8 +89,7 @@ export const en = {
   'home.trust.record.title': 'Coordination on Ruah',
   'home.trust.record.desc':
     'Messages and the commitments people make stay on the platform, so there is always a record.',
-  'home.trust.noChecks': "We don't run background checks.",
-  'home.trust.noChecksLink': "Here's what that means, and how to arrange your own →",
+  'home.trust.noChecksLink': "What that means, and how to arrange a check yourself →",
 
   // ── closing cta ──
   'home.cta.title': 'Ready to find your perfect match?',
@@ -154,23 +138,9 @@ export const zh: Record<MessageKey, string> = {
   'home.how.3.title': '见面并雇佣',
   'home.how.3.desc': '与最合适的人选联系、沟通、雇佣 —— 都在一个地方完成。',
 
-  'home.services.title': '你需要的每一种托育',
-  'home.services.sub': '从全职帮手，到偶尔的一个晚上',
-  'home.services.fulltime.label': '全职保姆',
-  'home.services.fulltime.desc': '工作日上门照护',
-  'home.services.afterschool.label': '放学后',
-  'home.services.afterschool.desc': '接送、作业、晚餐',
-  'home.services.evenings.label': '晚间与周末',
-  'home.services.evenings.desc': '约会之夜与临时需求',
-  'home.services.newborn.label': '新生儿照料',
-  'home.services.newborn.desc': '在家的头几个月',
-  'home.services.bilingual.label': '双语照护',
-  'home.services.bilingual.desc': '普通话、粤语、西班牙语',
-  'home.services.breaks.label': '假期',
-  'home.services.breaks.desc': '节假日与暑假',
-
-  'home.trust.title': '我们如何处理信任',
-  'home.trust.sub': '我们查什么，不查什么。把话说明白。',
+  'home.trust.title': '我们不做背景调查。',
+  'home.trust.sub':
+    '平台上没有任何标记代表某个人被查过底细。我们没查，就不会让一个对勾去承担它担不起的意思。我们查的是这三样：',
   'home.trust.identity.title': '身份已验证',
   'home.trust.identity.desc':
     '每一位通过验证的照护者，都由我们团队的真人核对过政府证件和本人照片。',
@@ -178,8 +148,7 @@ export const zh: Record<MessageKey, string> = {
   'home.trust.docs.desc': '证件照片私密存储，永远不会展示给家庭。绝不。',
   'home.trust.record.title': '协调都留在 Ruah 上',
   'home.trust.record.desc': '消息、以及各方做出的承诺都留在平台上，任何时候都有记录可查。',
-  'home.trust.noChecks': '我们不做背景调查。',
-  'home.trust.noChecksLink': '这意味着什么，以及如何自行安排 →',
+  'home.trust.noChecksLink': '这意味着什么，以及如何自行安排背景调查 →',
 
   'home.cta.title': '准备好找到合适的人了吗？',
   'home.cta.sub': '几分钟就能开始。无需信用卡。',
