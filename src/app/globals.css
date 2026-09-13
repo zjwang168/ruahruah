@@ -64,29 +64,6 @@
   background-image: var(--gradient-brand);
 }
 
-/* Landing hero float. The only animations on the site — they used to live in
-   a <style jsx global> block inside page.tsx, which shipped a runtime style
-   injection for three keyframes. Plain CSS here costs nothing. */
-@keyframes ruah-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-@keyframes ruah-float-slow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-@keyframes ruah-float-delay {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-.animate-float { animation: ruah-float 3s ease-in-out infinite; }
-.animate-float-slow { animation: ruah-float-slow 4s ease-in-out infinite; }
-.animate-float-delay { animation: ruah-float-delay 3.5s ease-in-out infinite 0.5s; }
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-float, .animate-float-slow, .animate-float-delay { animation: none; }
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

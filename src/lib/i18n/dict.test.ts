@@ -42,7 +42,10 @@ describe('i18n dictionary', () => {
     // Add a key here only when the two locales are legitimately the same
     // string — a brand name, a bare symbol. Everything else being identical
     // means the English was pasted in and never translated.
-    const ALLOWED_IDENTICAL = new Set<string>([])
+    const ALLOWED_IDENTICAL = new Set<string>([
+      // The name on the hero mockup card. Same name in every locale by design.
+      'home.card.matchName',
+    ])
 
     const untranslated = Object.keys(en).filter(
       k =>
@@ -61,7 +64,7 @@ describe('i18n dictionary', () => {
     // Catches the other half of the same mistake: a string that was edited but
     // is still Latin-only. Keys whose value is deliberately symbolic (emoji,
     // punctuation, a proper noun) are exempt.
-    const EXEMPT = new Set<string>([])
+    const EXEMPT = new Set<string>(['home.card.matchName'])
     const HAN = /\p{Script=Han}/u
 
     const noHan = Object.keys(zh).filter(
