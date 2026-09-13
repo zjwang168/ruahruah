@@ -6,16 +6,26 @@ import { useState, useEffect } from 'react'
 import LangToggle from '@/components/LangToggle'
 import { useT } from '@/lib/i18n/provider'
 
-/* Line icons, 24px grid, one stroke weight. They replaced the emoji in the
-   HOW IT WORKS and TRUST sections: emoji render as someone else's artwork at
-   someone else's weight, they cannot take a colour, and a section built out of
-   them reads as a template. The SERVICES tiles keep their emoji. */
+/* Line icons, 24px grid, one stroke weight, across all three card sections.
+   They replaced a set of emoji, which render as someone else's artwork at
+   someone else's weight, cannot take a colour, and make a page read as a
+   template. The hero badge keeps its sparkle — that one is punctuation inside
+   a sentence, not a section icon. */
 const ICON = {
   chat: 'M20 12.5c0 3.6-3.6 6.5-8 6.5-1 0-2-.15-2.9-.43L4 20.5l1.5-3.4C4.55 15.9 4 14.5 4 12.9 4 9.3 7.6 6.4 12 6.4s8 2.9 8 6.1z',
   connect: 'M9.5 7.5H6.8A3.8 3.8 0 003 11.3v1.4a3.8 3.8 0 003.8 3.8h2.7M14.5 7.5h2.7A3.8 3.8 0 0121 11.3v1.4a3.8 3.8 0 01-3.8 3.8h-2.7M8.5 12h7',
   check: 'M20.5 12a8.5 8.5 0 11-2.6-6.1M21 5.5l-8.4 8.4-2.8-2.8',
   id: 'M3 5.5h18v13H3zM9 11.2a2.2 2.2 0 100 .1zM5.6 16.4c.7-1.5 2-2.2 3.4-2.2s2.7.7 3.4 2.2M15 10h4M15 13.5h3',
   lock: 'M4 10.5h16v10H4zM8 10.5V7.8a4 4 0 018 0v2.7M12 14.2v2.4',
+
+  // SERVICES. Drawn for this grid rather than borrowed, so the stroke weight
+  // and the optical size match the five above.
+  person: 'M12 11.6a3.3 3.3 0 100-6.6 3.3 3.3 0 000 6.6zM5.4 19.6c0-3.3 3-5.3 6.6-5.3s6.6 2 6.6 5.3',
+  backpack: 'M6.5 8.5h11a2.5 2.5 0 012.5 2.5v7a2 2 0 01-2 2h-12a2 2 0 01-2-2v-7a2.5 2.5 0 012.5-2.5zM9 8.5V7a3 3 0 016 0v1.5M9.5 14h5',
+  moon: 'M20.5 14.8A8.5 8.5 0 019.2 3.5 8.5 8.5 0 1020.5 14.8z',
+  bottle: 'M9.5 3.5h5M10 3.5v2.3c0 .8-.3 1.2-.8 1.7-.7.6-1.2 1.4-1.2 2.4v8.6a2 2 0 002 2h3a2 2 0 002-2V9.9c0-1-.5-1.8-1.2-2.4-.5-.5-.8-.9-.8-1.7V3.5M8 12.5h8',
+  globe: 'M12 20.5a8.5 8.5 0 100-17 8.5 8.5 0 000 17zM3.5 12h17M12 3.5c2.2 2.3 3.4 5.3 3.4 8.5s-1.2 6.2-3.4 8.5c-2.2-2.3-3.4-5.3-3.4-8.5S9.8 5.8 12 3.5z',
+  sun: 'M12 16.5a4.5 4.5 0 100-9 4.5 4.5 0 000 9zM12 2.5v2M12 19.5v2M21.5 12h-2M4.5 12h-2M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4M18.7 18.7l-1.4-1.4M6.7 6.7L5.3 5.3',
 } as const
 
 function Icon({ path, className = '' }: { path: string; className?: string }) {
@@ -55,12 +65,12 @@ export default function Home() {
   ] as const
 
   const services = [
-    { emoji: '👶', label: 'home.services.fulltime.label', desc: 'home.services.fulltime.desc', color: 'bg-blue-50' },
-    { emoji: '🎒', label: 'home.services.afterschool.label', desc: 'home.services.afterschool.desc', color: 'bg-orange-50' },
-    { emoji: '🌙', label: 'home.services.evenings.label', desc: 'home.services.evenings.desc', color: 'bg-green-50' },
-    { emoji: '🍼', label: 'home.services.newborn.label', desc: 'home.services.newborn.desc', color: 'bg-purple-50' },
-    { emoji: '🗣', label: 'home.services.bilingual.label', desc: 'home.services.bilingual.desc', color: 'bg-yellow-50' },
-    { emoji: '☀️', label: 'home.services.breaks.label', desc: 'home.services.breaks.desc', color: 'bg-pink-50' },
+    { icon: ICON.person, label: 'home.services.fulltime.label', desc: 'home.services.fulltime.desc', color: 'bg-blue-50' },
+    { icon: ICON.backpack, label: 'home.services.afterschool.label', desc: 'home.services.afterschool.desc', color: 'bg-orange-50' },
+    { icon: ICON.moon, label: 'home.services.evenings.label', desc: 'home.services.evenings.desc', color: 'bg-green-50' },
+    { icon: ICON.bottle, label: 'home.services.newborn.label', desc: 'home.services.newborn.desc', color: 'bg-purple-50' },
+    { icon: ICON.globe, label: 'home.services.bilingual.label', desc: 'home.services.bilingual.desc', color: 'bg-yellow-50' },
+    { icon: ICON.sun, label: 'home.services.breaks.label', desc: 'home.services.breaks.desc', color: 'bg-pink-50' },
   ] as const
 
   const trust = [
@@ -195,7 +205,9 @@ export default function Home() {
             {services.map(s => (
               <button key={s.label} onClick={() => router.push('/onboarding/family')}
                 className={`${s.color} p-6 rounded-2xl text-left hover:scale-[1.02] transition-transform`}>
-                <div className="text-3xl mb-3">{s.emoji}</div>
+                <div className="w-10 h-10 rounded-full bg-white/70 text-gray-700 flex items-center justify-center mb-3">
+                  <Icon path={s.icon} className="w-5 h-5" />
+                </div>
                 <div className="font-semibold text-gray-900 text-sm">{t(s.label)}</div>
                 <div className="text-xs text-gray-400 mt-1">{t(s.desc)}</div>
               </button>
