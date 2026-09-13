@@ -59,7 +59,7 @@ export default function AdminFamilies() {
         .from('users_admin')
         .select(`
           *,
-          family_profiles (
+          family_admin (
             onboarding_answers,
             languages
           ),

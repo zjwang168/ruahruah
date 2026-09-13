@@ -26,8 +26,8 @@ export default function MessagesPage() {
         .from('messages')
         .select(`
           id, content, created_at, read_at, sender_id, receiver_id, sender_type, is_ai,
-          sender:users!messages_sender_id_fkey ( id, full_name, avatar_url, role ),
-          receiver:users!messages_receiver_id_fkey ( id, full_name, avatar_url, role )
+          sender:user_display!messages_sender_id_fkey ( id, display_name, avatar_url, role ),
+          receiver:user_display!messages_receiver_id_fkey ( id, display_name, avatar_url, role )
         `)
         .or(`sender_id.eq.${authUser.id},receiver_id.eq.${authUser.id}`)
         .order('created_at', { ascending: false })
@@ -115,7 +115,7 @@ export default function MessagesPage() {
                       : <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br ${
                           partner.role === 'family' ? 'from-blue-400 to-purple-500' : 'from-emerald-400 to-teal-500'
                         }`}>
-                          {partner.full_name?.[0]?.toUpperCase() || '?'}
+                          {partner.display_name?.[0]?.toUpperCase() || '?'}
                         </div>
                     }
                     {isUnread && (
@@ -127,7 +127,7 @@ export default function MessagesPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
                       <span className={`text-sm ${isUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
-                        {partner.full_name}
+                        {partner.display_name}
                       </span>
                       <span className="text-xs text-gray-400 flex-shrink-0">
                         {new Date(last.created_at).toLocaleDateString('en-US', {

@@ -49,14 +49,14 @@ export default function AdminMatching() {
           caregiver_profiles ( user_id, services, languages, hourly_rate_min, hourly_rate_max, years_experience, bio ),
           service_requests (
             id, service_type, status, ai_job_post,
-            family_profiles ( user_id, onboarding_answers, users ( full_name, avatar_url ) )
+            family_admin ( user_id, onboarding_answers, users_admin ( full_name, avatar_url ) )
           )
         `)
         .order('created_at', { ascending: false })
 
       const { data: familyData } = await supabase
         .from('users_admin')
-        .select(`id, full_name, email, avatar_url, created_at, family_profiles ( onboarding_answers )`)
+        .select(`id, full_name, email, avatar_url, created_at, family_admin ( onboarding_answers )`)
         .eq('role', 'family')
         .eq('is_banned', false)
         .eq('is_shadow_banned', false)
@@ -440,7 +440,7 @@ export default function AdminMatching() {
               <div key={m.id} className="px-6 py-4 flex items-center gap-4 hover:bg-gray-800/50 transition">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="text-sm text-white font-medium">{family?.users?.full_name || 'Unknown Family'}</span>
+                    <span className="text-sm text-white font-medium">{family?.users_admin?.full_name || 'Unknown Family'}</span>
                     <span className="text-gray-500">↔</span>
                     <span className="text-sm text-[#7FB3FF] font-medium">Caregiver</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor(m.status)}`}>{m.status}</span>

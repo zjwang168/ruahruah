@@ -36,7 +36,7 @@ export default function AdminModeration() {
         .from('users_admin')
         .select(`
           *,
-          family_profiles ( onboarding_answers )
+          family_admin ( onboarding_answers )
         `)
         .eq('role', 'family')
         .order('created_at', { ascending: false })

@@ -48,7 +48,7 @@ function ApplicationsContent() {
             id, services, languages, hourly_rate_min, hourly_rate_max,
             years_experience, bio, is_verified, background_check_status,
             onboarding_answers,
-            users ( id, full_name, avatar_url, city, state )
+            user_display ( id, display_name, avatar_url, city, state )
           )
         `)
         .eq('request_id', requestId)
@@ -173,10 +173,10 @@ function ApplicationsContent() {
                       key={app.id}
                       app={app}
                       updating={updating === app.id}
-                      onAccept={() => updateStatus(app.id, 'accepted', app.caregiver_profiles?.users?.id)}
-                      onDecline={() => updateStatus(app.id, 'declined', app.caregiver_profiles?.users?.id)}
-                      onViewProfile={() => router.push(`/caregiver/${app.caregiver_profiles?.users?.id}`)}
-                      onMessage={() => router.push(`/messages/${app.caregiver_profiles?.users?.id}`)}
+                      onAccept={() => updateStatus(app.id, 'accepted', app.caregiver_profiles?.user_display?.id)}
+                      onDecline={() => updateStatus(app.id, 'declined', app.caregiver_profiles?.user_display?.id)}
+                      onViewProfile={() => router.push(`/caregiver/${app.caregiver_profiles?.user_display?.id}`)}
+                      onMessage={() => router.push(`/messages/${app.caregiver_profiles?.user_display?.id}`)}
                     />
                   ))}
                 </div>
@@ -193,10 +193,10 @@ function ApplicationsContent() {
                       key={app.id}
                       app={app}
                       updating={updating === app.id}
-                      onAccept={() => updateStatus(app.id, 'accepted', app.caregiver_profiles?.users?.id)}
-                      onDecline={() => updateStatus(app.id, 'declined', app.caregiver_profiles?.users?.id)}
-                      onViewProfile={() => router.push(`/caregiver/${app.caregiver_profiles?.users?.id}`)}
-                      onMessage={() => router.push(`/messages/${app.caregiver_profiles?.users?.id}`)}
+                      onAccept={() => updateStatus(app.id, 'accepted', app.caregiver_profiles?.user_display?.id)}
+                      onDecline={() => updateStatus(app.id, 'declined', app.caregiver_profiles?.user_display?.id)}
+                      onViewProfile={() => router.push(`/caregiver/${app.caregiver_profiles?.user_display?.id}`)}
+                      onMessage={() => router.push(`/messages/${app.caregiver_profiles?.user_display?.id}`)}
                     />
                   ))}
                 </div>
@@ -218,7 +218,7 @@ function ApplicationCard({ app, updating, onAccept, onDecline, onViewProfile, on
   onMessage: () => void
 }) {
   const cp = app.caregiver_profiles
-  const u = cp?.users
+  const u = cp?.user_display
   const answers = cp?.onboarding_answers || {}
   // Derive display state from the unified match fields
   const isPending = app.family_interested === null && app.status !== 'declined'
@@ -237,13 +237,13 @@ function ApplicationCard({ app, updating, onAccept, onDecline, onViewProfile, on
         {u?.avatar_url
           ? <img src={u.avatar_url} className="w-12 h-12 rounded-full object-cover flex-shrink-0" alt="" />
           : <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold flex-shrink-0">
-              {u?.full_name?.[0]?.toUpperCase() || '?'}
+              {u?.display_name?.[0]?.toUpperCase() || '?'}
             </div>
         }
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-gray-900 text-sm">{u?.full_name || 'Caregiver'}</span>
+            <span className="font-semibold text-gray-900 text-sm">{u?.display_name || 'Caregiver'}</span>
             {cp?.is_verified && (
               <span className="text-xs bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full">✓ Verified</span>
             )}
