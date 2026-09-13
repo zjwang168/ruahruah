@@ -148,6 +148,44 @@ export const en = {
   'auth.err.nameLatin': 'Please use the Latin alphabet — letters, apostrophes and hyphens.',
   'auth.err.saveFailed': 'We could not finish setting up your account. Please try again.',
   'auth.err.oauth': 'Sign-in did not complete. Please try again.',
+
+  // ── common: labels shared by both sides of the marketplace ──
+  // The service vocabulary was copied into seven files as a local
+  // SERVICE_LABELS, each a slightly different subset. It lives here now, once,
+  // and src/lib/i18n/labels.ts reads it.
+  'common.service.childcare': 'Childcare',
+  'common.service.babysitter': 'Babysitter',
+  'common.service.elder_care': 'Senior Care',
+  'common.service.housekeeping': 'Housekeeping',
+  'common.service.chef': 'Personal Chef',
+  'common.service.pet_care': 'Pet Care',
+  'common.service.tutoring': 'Tutoring',
+  'common.service.postpartum': 'Postpartum Care',
+  'common.service.manual': 'General',
+
+  'common.back': 'Back',
+  'common.loading': 'Loading…',
+  'common.perHour': '/hr',
+
+  // ── caregiver: my applications ──
+  'cg.apps.title': 'My Applications',
+  'cg.apps.total': '{count} total',
+  'cg.apps.filter.all': 'All',
+  'cg.apps.filter.pending': 'Pending',
+  'cg.apps.filter.accepted': 'Accepted',
+  'cg.apps.filter.declined': 'Declined',
+  'cg.apps.status.pending': 'pending',
+  'cg.apps.status.accepted': 'accepted',
+  'cg.apps.status.declined': 'declined',
+  'cg.apps.empty': 'No applications yet.',
+  'cg.apps.emptyFiltered': 'Nothing with this status yet.',
+  'cg.apps.browse': 'Browse open requests →',
+  'cg.apps.family': 'A Family',
+  'cg.apps.applied': 'Applied {date}',
+  'cg.apps.message': 'Message',
+  'cg.apps.yourMessage': 'Your message',
+
+
 } as const
 
 export type MessageKey = keyof typeof en
@@ -254,6 +292,39 @@ export const zh: Record<MessageKey, string> = {
   'auth.err.nameLatin': '请使用拉丁字母：字母、撇号和连字符。',
   'auth.err.saveFailed': '账号没能创建完成，请再试一次。',
   'auth.err.oauth': '登录没有完成，请再试一次。',
+
+  'common.service.childcare': '托育',
+  'common.service.babysitter': '临时看护',
+  'common.service.elder_care': '长者照护',
+  'common.service.housekeeping': '家务',
+  'common.service.chef': '私厨',
+  'common.service.pet_care': '宠物照护',
+  'common.service.tutoring': '课业辅导',
+  'common.service.postpartum': '月子照护',
+  'common.service.manual': '综合',
+
+  'common.back': '返回',
+  'common.loading': '加载中……',
+  'common.perHour': '/小时',
+
+  'cg.apps.title': '我的申请',
+  'cg.apps.total': '共 {count} 条',
+  'cg.apps.filter.all': '全部',
+  'cg.apps.filter.pending': '待回复',
+  'cg.apps.filter.accepted': '已接受',
+  'cg.apps.filter.declined': '已婉拒',
+  'cg.apps.status.pending': '待回复',
+  'cg.apps.status.accepted': '已接受',
+  'cg.apps.status.declined': '已婉拒',
+  'cg.apps.empty': '还没有申请记录。',
+  'cg.apps.emptyFiltered': '这个状态下暂时没有内容。',
+  'cg.apps.browse': '看看正在招人的需求 →',
+  'cg.apps.family': '一个家庭',
+  'cg.apps.applied': '{date} 申请',
+  'cg.apps.message': '私信',
+  'cg.apps.yourMessage': '你发出的留言',
+
+
 
 }
 
@@ -378,6 +449,39 @@ export const es: Record<MessageKey, string> = {
   'auth.err.nameLatin': 'Usa el alfabeto latino: letras, apóstrofos y guiones.',
   'auth.err.saveFailed': 'No pudimos terminar de crear tu cuenta. Inténtalo de nuevo.',
   'auth.err.oauth': 'No se completó el inicio de sesión. Inténtalo de nuevo.',
+
+  'common.service.childcare': 'Cuidado de niños',
+  'common.service.babysitter': 'Niñera por horas',
+  'common.service.elder_care': 'Cuidado de adultos mayores',
+  'common.service.housekeeping': 'Limpieza del hogar',
+  'common.service.chef': 'Chef personal',
+  'common.service.pet_care': 'Cuidado de mascotas',
+  'common.service.tutoring': 'Tutorías',
+  'common.service.postpartum': 'Cuidado posparto',
+  'common.service.manual': 'Servicios generales',
+
+  'common.back': 'Volver',
+  'common.loading': 'Cargando…',
+  'common.perHour': '/hora',
+
+  'cg.apps.title': 'Mis solicitudes',
+  'cg.apps.total': '{count} en total',
+  'cg.apps.filter.all': 'Todas',
+  'cg.apps.filter.pending': 'Pendientes',
+  'cg.apps.filter.accepted': 'Aceptadas',
+  'cg.apps.filter.declined': 'Rechazadas',
+  'cg.apps.status.pending': 'pendiente',
+  'cg.apps.status.accepted': 'aceptada',
+  'cg.apps.status.declined': 'rechazada',
+  'cg.apps.empty': 'Aún no has enviado solicitudes.',
+  'cg.apps.emptyFiltered': 'Nada con este estado por ahora.',
+  'cg.apps.browse': 'Ver solicitudes abiertas →',
+  'cg.apps.family': 'Una familia',
+  'cg.apps.applied': 'Enviada el {date}',
+  'cg.apps.message': 'Mensaje',
+  'cg.apps.yourMessage': 'Tu mensaje',
+
+
 
 }
 

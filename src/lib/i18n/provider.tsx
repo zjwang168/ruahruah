@@ -11,9 +11,13 @@ import {
 } from './config'
 import { DICT, type MessageKey } from './dict'
 
+/** Values substituted into a string's {placeholders}. */
+export type TVars = Record<string, string | number>
+export type TFn = (key: MessageKey, vars?: TVars) => string
+
 type I18nValue = {
   locale: Locale
-  t: (key: MessageKey) => string
+  t: TFn
   setLocale: (next: Locale) => void
 }
 
@@ -53,7 +57,18 @@ export function I18nProvider({
       // string shows up as `home.cta.title` in the page, which is obvious in a
       // screenshot. Silently serving English would hide it. The Record<> type
       // on `zh` should make this unreachable anyway.
-      t: (key: MessageKey) => DICT[locale]?.[key] ?? DICT[DEFAULT_LOCALE][key] ?? key,
+      //
+      // {placeholders} are substituted rather than concatenated at the call
+      // site, because word order is not a constant: "5 total" is "共 5 条" in
+      // Chinese, with the number in the middle. An unknown placeholder is left
+      // as-is so it shows up in the page instead of vanishing.
+      t: (key: MessageKey, vars?: TVars) => {
+        const raw = DICT[locale]?.[key] ?? DICT[DEFAULT_LOCALE][key] ?? key
+        if (!vars) return raw
+        return raw.replace(/\{(\w+)\}/g, (whole, name: string) =>
+          name in vars ? String(vars[name]) : whole
+        )
+      },
     }),
     [locale, setLocale]
   )
@@ -70,6 +85,6 @@ export function useI18n(): I18nValue {
 }
 
 /** Shorthand for the common case. `const t = useT()` then `t('nav.signin')`. */
-export function useT(): (key: MessageKey) => string {
+export function useT(): TFn {
   return useI18n().t
 }

@@ -3,21 +3,16 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-
-const SERVICE_LABELS: Record<string, string> = {
-  childcare: 'Childcare',
-  elder_care: 'Senior Care',
-  housekeeping: 'Housekeeping',
-  chef: 'Personal Chef',
-  pet_care: 'Pet Care',
-  tutoring: 'Tutoring',
-}
+import { useI18n } from '@/lib/i18n/provider'
+import { HTML_LANG } from '@/lib/i18n/config'
+import { serviceLabel } from '@/lib/i18n/labels'
 
 export default function CaregiverApplicationsPage() {
   const [user, setUser] = useState<any>(null)
   const [applications, setApplications] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const { t, locale } = useI18n()
   const router = useRouter()
   const supabase = createClient()
 
@@ -70,7 +65,7 @@ export default function CaregiverApplicationsPage() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAFCFF]">
-      <div className="text-gray-400">Loading...</div>
+      <div className="text-gray-400">{t('common.loading')}</div>
     </div>
   )
 
@@ -93,20 +88,20 @@ export default function CaregiverApplicationsPage() {
     : applications.filter(a => displayStatus(a) === statusFilter)
 
   const FILTERS = [
-    { key: 'all', label: 'All' },
-    { key: 'pending', label: 'Pending' },
-    { key: 'accepted', label: 'Accepted' },
-    { key: 'declined', label: 'Declined' },
-  ]
+    { key: 'all', label: t('cg.apps.filter.all') },
+    { key: 'pending', label: t('cg.apps.filter.pending') },
+    { key: 'accepted', label: t('cg.apps.filter.accepted') },
+    { key: 'declined', label: t('cg.apps.filter.declined') },
+  ] as const
 
   return (
     <div className="min-h-screen bg-[#FAFCFF]">
       <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center gap-3 sticky top-0 z-10">
         <button onClick={() => router.push('/caregiver/dashboard')}
-          className="text-gray-400 hover:text-gray-600 text-sm">← Back</button>
+          className="text-gray-400 hover:text-gray-600 text-sm">← {t('common.back')}</button>
         <div className="flex-1">
-          <div className="font-semibold text-gray-900 text-sm">My Applications</div>
-          <div className="text-xs text-gray-400">{applications.length} total</div>
+          <div className="font-semibold text-gray-900 text-sm">{t('cg.apps.title')}</div>
+          <div className="text-xs text-gray-400">{t('cg.apps.total', { count: applications.length })}</div>
         </div>
       </header>
 
@@ -128,10 +123,12 @@ export default function CaregiverApplicationsPage() {
         {filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <div className="text-4xl mb-3">📩</div>
-            <p className="text-sm">No {statusFilter !== 'all' ? statusFilter : ''} applications yet.</p>
+            <p className="text-sm">
+              {statusFilter === 'all' ? t('cg.apps.empty') : t('cg.apps.emptyFiltered')}
+            </p>
             <button onClick={() => router.push('/caregiver/requests')}
               className="mt-2 text-xs text-[#7FB3FF] hover:underline">
-              Browse open requests →
+              {t('cg.apps.browse')}
             </button>
           </div>
         ) : (
@@ -142,7 +139,7 @@ export default function CaregiverApplicationsPage() {
               const familyUserId = req?.family_profiles?.user_id
               const status = displayStatus(app)
               // Abbreviated by public.display_name() before it left Postgres.
-              const displayName = familyUser?.display_name || 'A Family'
+              const displayName = familyUser?.display_name || t('cg.apps.family')
 
               return (
                 <div key={app.id} className={`bg-white rounded-2xl border p-4 ${
@@ -164,28 +161,32 @@ export default function CaregiverApplicationsPage() {
                           status === 'accepted' ? 'bg-green-100 text-green-600'
                           : status === 'declined' ? 'bg-red-100 text-red-400'
                           : 'bg-yellow-100 text-yellow-600'
-                        }`}>{status}</span>
+                        }`}>{t(`cg.apps.status.${status}` as 'cg.apps.status.pending')}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
-                        <span>{SERVICE_LABELS[req?.service_type] || req?.service_type}</span>
+                        <span>{serviceLabel(t, req?.service_type)}</span>
                         {(req?.pay_min || req?.pay_max) && (
-                          <span>· ${req.pay_min}{req.pay_max ? `–$${req.pay_max}` : '+'}/hr</span>
+                          <span>· ${req.pay_min}{req.pay_max ? `–$${req.pay_max}` : '+'}{t('common.perHour')}</span>
                         )}
-                        <span>· Applied {new Date(app.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                        <span>· {t('cg.apps.applied', {
+                          date: new Date(app.created_at).toLocaleDateString(
+                            HTML_LANG[locale], { month: 'short', day: 'numeric' }
+                          ),
+                        })}</span>
                       </div>
                     </div>
                     {status === 'accepted' && familyUserId && (
                       <button onClick={() => router.push(`/messages/${familyUserId}`)}
                         className="text-xs px-3 py-1.5 rounded-lg text-white flex-shrink-0"
                         style={{ background: 'linear-gradient(135deg, #7FB3FF 0%, #A78BFA 100%)' }}>
-                        💬 Message
+                        💬 {t('cg.apps.message')}
                       </button>
                     )}
                   </div>
 
                   {app.initiator_message && (
                     <div className="mt-3 pt-3 border-t border-gray-50">
-                      <div className="text-xs text-gray-400 mb-1">Your message</div>
+                      <div className="text-xs text-gray-400 mb-1">{t('cg.apps.yourMessage')}</div>
                       <p className="text-sm text-gray-600 leading-relaxed">{app.initiator_message}</p>
                     </div>
                   )}

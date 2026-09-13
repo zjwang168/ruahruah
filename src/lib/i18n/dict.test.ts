@@ -68,6 +68,21 @@ describe('i18n dictionary', () => {
     }
   })
 
+  it('every locale carries the same {placeholders} as the English', () => {
+    // A translation that drops {count} renders a sentence with a hole in it,
+    // and one that invents {name} renders the brace. Neither shows up in a
+    // type check.
+    const holes = (v: string) => (v.match(/\{\w+\}/g) ?? []).sort().join(',')
+
+    for (const locale of LOCALES) {
+      if (locale === 'en') continue
+      const wrong = Object.keys(en).filter(
+        k => holes(DICT[locale][k as MessageKey]) !== holes(en[k as keyof typeof en])
+      )
+      assert.deepEqual(wrong, [], `${locale}: placeholders differ from en: ${wrong.join(', ')}`)
+    }
+  })
+
   it('every zh string actually contains Chinese', () => {
     // Catches the other half of the same mistake: a string that was edited but
     // is still Latin-only. Keys whose value is deliberately symbolic (emoji,
