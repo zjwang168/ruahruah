@@ -106,6 +106,22 @@ export async function proxy(request: NextRequest) {
     const role = userData?.role
     const isAdmin = isAdminEmail(user.email)
 
+    // A caller with no usable role cannot be routed by the three rules below.
+    // The family rule sends them to /caregiver/dashboard, the caregiver rule
+    // sends them straight back, and the browser spins between the two until it
+    // gives up. Reachable in one step: the register page inserts the `users`
+    // row AFTER supabase.auth.signUp, so an insert that fails leaves a live
+    // session with no row behind it — and `role` is null for the rest of that
+    // account's life until someone repairs it by hand.
+    //
+    // The landing page is where they belong: its two CTAs are the family and
+    // caregiver funnels, which is exactly the choice they never completed, and
+    // it is public so nothing here can bounce them again. Admins are exempt —
+    // the email allowlist is their authorisation, not `role`.
+    if (!isAdmin && role !== 'family' && role !== 'caregiver' && isGatedPage) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+
     // --- Role-based route isolation ---
 
     // Admin pages: only admin emails
