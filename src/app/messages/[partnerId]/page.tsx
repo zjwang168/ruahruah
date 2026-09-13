@@ -31,9 +31,13 @@ export default function ChatPage() {
         .from('user_self').select('*').single()
       setUser(userData)
 
-      // Get partner info
+      // Get partner info. user_display, not `users`: the partner may be a
+      // household or a caregiver, so neither browse view fits, and full_name
+      // is no longer granted to `authenticated`. The view's gate is
+      // can_view_user() — the same predicate the users policy already uses,
+      // so this widens nothing; it only returns the abbreviated name.
       const { data: partnerData } = await supabase
-        .from('users').select('id, full_name, avatar_url, role').eq('id', partnerId).single()
+        .from('user_display').select('id, display_name, avatar_url, role').eq('id', partnerId).single()
       setPartner(partnerData)
 
       // Get messages between the two users
@@ -175,7 +179,7 @@ export default function ChatPage() {
   const ruahLabel = (msg: any) => {
     if (msg.receiver_id === user?.id) return 'Ruah'
     if (user?.role === 'family') return 'Ruah · sent on your behalf'
-    return `Ruah · on behalf of ${partner?.full_name?.split(' ')[0] || 'the family'}`
+    return `Ruah · on behalf of ${partner?.display_name?.split(' ')[0] || 'the family'}`
   }
 
   return (
@@ -192,11 +196,11 @@ export default function ChatPage() {
             : <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 bg-gradient-to-br ${
                 partner?.role === 'family' ? 'from-blue-400 to-purple-500' : 'from-emerald-400 to-teal-500'
               }`}>
-                {partner?.full_name?.[0]?.toUpperCase() || '?'}
+                {partner?.display_name?.[0]?.toUpperCase() || '?'}
               </div>
           }
           <div className="min-w-0">
-            <div className="font-semibold text-gray-900 text-sm truncate">{partner?.full_name}</div>
+            <div className="font-semibold text-gray-900 text-sm truncate">{partner?.display_name}</div>
             <div className="text-xs text-gray-400 capitalize">{partner?.role}</div>
           </div>
         </div>
@@ -213,7 +217,7 @@ export default function ChatPage() {
           <div className="text-center py-12 text-gray-400">
             <div className="text-3xl mb-2">👋</div>
             <p className="text-sm">Start the conversation!</p>
-            <p className="text-xs mt-1 text-gray-300">Say hello to {partner?.full_name}</p>
+            <p className="text-xs mt-1 text-gray-300">Say hello to {partner?.display_name}</p>
           </div>
         ) : (
           <div className="max-w-2xl mx-auto space-y-4">
@@ -309,7 +313,7 @@ export default function ChatPage() {
                 sendMessage()
               }
             }}
-            placeholder={`Message ${partner?.full_name?.split(' ')[0] || ''}...`}
+            placeholder={`Message ${partner?.display_name?.split(' ')[0] || ''}...`}
             rows={1}
             className="flex-1 border border-gray-200 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7FB3FF] resize-none"
             style={{ maxHeight: '120px' }}

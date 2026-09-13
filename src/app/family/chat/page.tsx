@@ -78,7 +78,7 @@ export default function ChatPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       const { data: userData } = await supabase.from('user_self').select('*').single()
-      const { data: profileData } = await supabase.from('family_profiles').select('*').eq('user_id', user.id).single()
+      const { data: profileData } = await supabase.from('family_self').select('*').single()
       setUser(userData)
       setFamilyProfile(profileData)
       setProfileLoaded(true)

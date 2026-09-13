@@ -85,10 +85,11 @@ export default function SearchPage() {
           }
         }
 
+        // family_self: onboarding_answers is withheld from `authenticated`
+        // on the base table, and this is the caller's own row.
         const { data: familyData } = await supabase
-          .from('family_profiles')
+          .from('family_self')
           .select('id, onboarding_answers')
-          .eq('user_id', authUser.id)
           .single()
 
         if (familyData?.id) {

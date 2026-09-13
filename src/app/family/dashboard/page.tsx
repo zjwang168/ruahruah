@@ -71,7 +71,7 @@ export default function FamilyDashboard() {
       if (!authUser) { router.push('/login'); return }
 
       const { data: userData } = await supabase.from('user_self').select('*').single()
-      const { data: familyData } = await supabase.from('family_profiles').select('*').eq('user_id', authUser.id).single()
+      const { data: familyData } = await supabase.from('family_self').select('*').single()
       const { data: notifData } = await supabase.from('notifications').select('*').eq('user_id', authUser.id).neq('type', INTERNAL_NOTIFICATION_TYPE).order('created_at', { ascending: false }).limit(10)
 
       let requestsData: any[] = []
@@ -86,12 +86,34 @@ export default function FamilyDashboard() {
 
       let matchesData: any[] = []
       if (familyData?.id) {
+        // No nested users( ... ). The surname is withheld from `authenticated`,
+        // and PostgREST answers the WHOLE query with 42501 when a select names
+        // a column it cannot read — which is exactly how this page went blank
+        // on 2026-09-13 over `email`. A second query against caregiver_public
+        // brings back the display identity and it is merged onto
+        // caregiver_profiles.users, so everything downstream still reads
+        // `.users` and only the key inside it changed.
         const { data } = await supabase
           .from('matches')
-          .select(`*, service_requests!inner(family_id, service_type), caregiver_profiles(user_id, services, languages, hourly_rate_min, hourly_rate_max, years_experience, bio, is_verified, onboarding_answers, users(full_name, avatar_url))`)
+          .select(`*, service_requests!inner(family_id, service_type), caregiver_profiles(user_id, services, languages, hourly_rate_min, hourly_rate_max, years_experience, bio, is_verified, onboarding_answers)`)
           .eq('service_requests.family_id', familyData.id)
           .order('created_at', { ascending: false })
         matchesData = data || []
+
+        const cgUserIds = [...new Set(
+          matchesData.map((m: any) => m.caregiver_profiles?.user_id).filter(Boolean)
+        )]
+        if (cgUserIds.length > 0) {
+          const { data: cgRows } = await supabase
+            .from('caregiver_public').select('user_id, users').in('user_id', cgUserIds)
+          const cgMap: Record<string, any> = {}
+          cgRows?.forEach((r: any) => { cgMap[r.user_id] = r.users })
+          matchesData.forEach((m: any) => {
+            if (m.caregiver_profiles) {
+              m.caregiver_profiles.users = cgMap[m.caregiver_profiles.user_id] || null
+            }
+          })
+        }
       }
 
       const onboardingServices: string[] = familyData?.onboarding_answers?.services || []
@@ -298,7 +320,7 @@ export default function FamilyDashboard() {
           const proposalMatches = matches.filter(m => m.status === 'pending_family_approval')
           if (proposalMatches.length === 0 && !proposalNotice) return null
           const p = proposalMatches[0]
-          const pName = p?.caregiver_profiles?.users?.full_name || 'A caregiver'
+          const pName = p?.caregiver_profiles?.users?.display_name || 'A caregiver'
           const pReason = p ? String(p.ai_reasoning || '').replace(/^\[agent-proposed\]\s*/, '') : ''
           return (
             <div className="bg-white rounded-2xl border border-amber-300 p-5 mb-4">

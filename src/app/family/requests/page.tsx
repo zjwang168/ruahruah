@@ -154,7 +154,7 @@ export default function FamilyRequestsPage() {
       if (!authUser) { router.push('/login'); return }
 
       const { data: userData } = await supabase.from('user_self').select('*').single()
-      const { data: familyData } = await supabase.from('family_profiles').select('*').eq('user_id', authUser.id).single()
+      const { data: familyData } = await supabase.from('family_self').select('*').single()
       const { data: notifData } = await supabase.from('notifications').select('id, read').eq('user_id', authUser.id).neq('type', 'admin_escalation')
 
       let requestsData: any[] = []

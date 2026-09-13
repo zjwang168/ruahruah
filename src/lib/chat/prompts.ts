@@ -52,14 +52,21 @@ export async function buildSystemPrompt(
   supabase: SupabaseClient,
   userId: string
 ): Promise<string> {
+  // user_self / family_self, not the base tables: full_name and
+  // onboarding_answers are withheld from `authenticated`, and these are the
+  // caller's OWN rows — Ruah addresses the person by their own name.
+  //
+  // This REQUIRES a session-bound client. The views key off auth.uid(), so a
+  // service-role client would read zero rows and Ruah would greet everyone as
+  // "there". /api/chat passes the session client; keep it that way.
   const { data: user } = await supabase
-    .from('users').select('full_name').eq('id', userId).single()
+    .from('user_self').select('full_name').single()
   const name = user?.full_name || 'there'
 
   switch (key) {
     case 'family_chat': {
       const { data: profile } = await supabase
-        .from('family_profiles').select('onboarding_answers').eq('user_id', userId).single()
+        .from('family_self').select('onboarding_answers').single()
       return familyChatPrompt(name, profile?.onboarding_answers)
     }
     case 'caregiver_chat': {

@@ -88,7 +88,7 @@ export default function FamilyProfile() {
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (!authUser) { router.push('/login'); return }
       const { data: userData } = await supabase.from('user_self').select('*').single()
-      const { data: profileData } = await supabase.from('family_profiles').select('*').eq('user_id', authUser.id).single()
+      const { data: profileData } = await supabase.from('family_self').select('*').single()
       setUser(userData)
       setProfile(profileData)
       setFullName(userData?.full_name || '')

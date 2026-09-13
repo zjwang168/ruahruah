@@ -54,7 +54,7 @@ function PostRequestContent() {
       if (!authUser) { router.push('/login'); return }
 
       const { data: userData } = await supabase.from('user_self').select('*').single()
-      const { data: profileData } = await supabase.from('family_profiles').select('*').eq('user_id', authUser.id).single()
+      const { data: profileData } = await supabase.from('family_self').select('*').single()
       setUser(userData)
       setFamilyProfile(profileData)
 
@@ -206,7 +206,7 @@ function PostRequestContent() {
       setSaved(true)
       setTimeout(() => { setSaved(false); router.push('/family/dashboard') }, 1200)
     } else {
-      const { data: fp } = await supabase.from('family_profiles').select('id').eq('user_id', user.id).single()
+      const { data: fp } = await supabase.from('family_self').select('id').single()
       const { error } = await supabase.from('service_requests').insert({ family_id: fp?.id, status: 'open', ...payload })
       if (error) { alert('Failed to submit.'); setSubmitting(false); return }
       await supabase.from('notifications').insert({
