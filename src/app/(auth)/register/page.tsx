@@ -4,19 +4,27 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { nameError, fullName as joinName } from '@/lib/names'
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1)
   const [role, setRole] = useState<'family' | 'caregiver' | ''>('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [fullName, setFullName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
   const supabase = createClient()
 
   const handleRegister = async () => {
+    // Checked before signUp, not after: a failed users insert leaves an auth
+    // account with no row behind it, and that account then has no role and
+    // cannot be routed anywhere.
+    const nameProblem = nameError(firstName, lastName)
+    if (nameProblem) { setError(nameProblem); return }
+
     setLoading(true)
     setError('')
 
@@ -34,7 +42,9 @@ export default function RegisterPage() {
         id: data.user.id,
         email,
         role,
-        full_name: fullName,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        full_name: joinName(firstName, lastName),
       })
 
       if (userError) {
@@ -88,16 +98,31 @@ export default function RegisterPage() {
         {/* Step 2: 填信息 */}
         {step === 2 && (
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full name</label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={e => setFullName(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Your full name"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">First name</label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Sarah"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Last name</label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Chen"
+                />
+              </div>
             </div>
+            <p className="text-xs text-gray-400 -mt-2">
+              Others see you as “Sarah C.” — your last name is never shown.
+            </p>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
@@ -121,7 +146,7 @@ export default function RegisterPage() {
 
             <button
               onClick={handleRegister}
-              disabled={loading || !email || !password || !fullName}
+              disabled={loading || !email || !password || !firstName.trim() || !lastName.trim()}
               className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
             >
               {loading ? 'Creating account...' : 'Create account'}

@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { nameError, fullName as joinName } from '@/lib/names'
 
 function RegisterForm() {
   const searchParams = useSearchParams()
@@ -12,13 +13,19 @@ function RegisterForm() {
   const role = searchParams.get('role') as 'family' | 'caregiver'
   const answers = JSON.parse(decodeURIComponent(searchParams.get('answers') || '{}'))
 
-  const [fullName, setFullName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const handleRegister = async () => {
+    // Before signUp: a failed users insert would strand an auth account with
+    // no row, no role and nowhere to be routed.
+    const nameProblem = nameError(firstName, lastName)
+    if (nameProblem) { setError(nameProblem); return }
+
     setLoading(true)
     setError('')
 
@@ -30,7 +37,9 @@ function RegisterForm() {
         id: data.user.id,
         email,
         role,
-        full_name: fullName,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        full_name: joinName(firstName, lastName),
         zipcode: answers.zipcode || null,
         city: answers.city || null,
         state: answers.state || null,
@@ -102,16 +111,24 @@ function RegisterForm() {
         </div>
 
         <div className="space-y-3">
-          <input type="text" value={fullName} onChange={e => setFullName(e.target.value)}
-            className="w-full border border-gray-200 rounded-2xl px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#7FB3FF]"
-            placeholder="Full name" />
+          <div className="grid grid-cols-2 gap-3">
+            <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
+              className="w-full border border-gray-200 rounded-2xl px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#7FB3FF]"
+              placeholder="First name" />
+            <input type="text" value={lastName} onChange={e => setLastName(e.target.value)}
+              className="w-full border border-gray-200 rounded-2xl px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#7FB3FF]"
+              placeholder="Last name" />
+          </div>
+          <p className="text-xs text-gray-400 px-1">
+            Others see you as “Sarah C.” — your last name is never shown.
+          </p>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)}
             className="w-full border border-gray-200 rounded-2xl px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#7FB3FF]"
             placeholder="Email address" />
           <input type="password" value={password} onChange={e => setPassword(e.target.value)}
             className="w-full border border-gray-200 rounded-2xl px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#7FB3FF]"
             placeholder="Password (8+ characters)" />
-          <button onClick={handleRegister} disabled={loading || !fullName || !email || !password}
+          <button onClick={handleRegister} disabled={loading || !firstName.trim() || !lastName.trim() || !email || !password}
             className="w-full text-white py-4 rounded-2xl font-semibold disabled:opacity-40 transition"
             style={{ background: 'linear-gradient(135deg, #7FB3FF 0%, #A78BFA 100%)' }}>
             {loading ? 'Creating account...' : 'Create account →'}
