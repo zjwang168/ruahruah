@@ -105,7 +105,7 @@ export const en = {
   'home.trust.record.desc':
     'Messages and the commitments people make stay on the platform, so there is always a record.',
   'home.trust.noChecks': "We don't run background checks.",
-  'home.trust.noChecksLink': "Here's what that means, and how to arrange your own →",
+  'home.trust.noChecksLink': 'What that means, and how to arrange a check yourself →',
 
   // ── closing cta ──
   'home.cta.title': 'Ready to find your perfect match?',
@@ -180,7 +180,7 @@ export const zh: Record<MessageKey, string> = {
   'home.trust.record.title': '协调都留在 Ruah 上',
   'home.trust.record.desc': '消息、以及各方做出的承诺都留在平台上，任何时候都有记录可查。',
   'home.trust.noChecks': '我们不做背景调查。',
-  'home.trust.noChecksLink': '这意味着什么，以及如何自行安排 →',
+  'home.trust.noChecksLink': '这意味着什么，以及如何自行安排背景调查 →',
 
   'home.cta.title': '准备好找到合适的人了吗？',
   'home.cta.sub': '几分钟就能开始。无需信用卡。',
@@ -271,7 +271,7 @@ export const es: Record<MessageKey, string> = {
   'home.trust.record.desc':
     'Los mensajes y los compromisos que cada persona asume quedan en la plataforma, así siempre hay un registro.',
   'home.trust.noChecks': 'No hacemos verificación de antecedentes.',
-  'home.trust.noChecksLink': 'Qué significa eso y cómo hacer la tuya por tu cuenta →',
+  'home.trust.noChecksLink': 'Qué significa eso y cómo hacer tu propia verificación →',
 
   'home.cta.title': '¿Listos para encontrar a la persona indicada?',
   'home.cta.sub': 'Empieza en minutos. No se necesita tarjeta de crédito.',

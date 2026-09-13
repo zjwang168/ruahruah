@@ -6,6 +6,35 @@ import { useState, useEffect } from 'react'
 import LangToggle from '@/components/LangToggle'
 import { useT } from '@/lib/i18n/provider'
 
+/* Line icons, 24px grid, one stroke weight. They replaced the emoji in the
+   HOW IT WORKS and TRUST sections: emoji render as someone else's artwork at
+   someone else's weight, they cannot take a colour, and a section built out of
+   them reads as a template. The SERVICES tiles keep their emoji. */
+const ICON = {
+  chat: 'M20 12.5c0 3.6-3.6 6.5-8 6.5-1 0-2-.15-2.9-.43L4 20.5l1.5-3.4C4.55 15.9 4 14.5 4 12.9 4 9.3 7.6 6.4 12 6.4s8 2.9 8 6.1z',
+  connect: 'M9.5 7.5H6.8A3.8 3.8 0 003 11.3v1.4a3.8 3.8 0 003.8 3.8h2.7M14.5 7.5h2.7A3.8 3.8 0 0121 11.3v1.4a3.8 3.8 0 01-3.8 3.8h-2.7M8.5 12h7',
+  check: 'M20.5 12a8.5 8.5 0 11-2.6-6.1M21 5.5l-8.4 8.4-2.8-2.8',
+  id: 'M3 5.5h18v13H3zM9 11.2a2.2 2.2 0 100 .1zM5.6 16.4c.7-1.5 2-2.2 3.4-2.2s2.7.7 3.4 2.2M15 10h4M15 13.5h3',
+  lock: 'M4 10.5h16v10H4zM8 10.5V7.8a4 4 0 018 0v2.7M12 14.2v2.4',
+} as const
+
+function Icon({ path, className = '' }: { path: string; className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d={path} />
+    </svg>
+  )
+}
+
 export default function Home() {
   const router = useRouter()
   const t = useT()
@@ -17,12 +46,12 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Keys only. The strings live in src/lib/i18n/dict.ts so both locales stay
-  // side by side; the emoji and the colours are not translatable and stay here.
+  // Keys only. The strings live in src/lib/i18n/dict.ts so every locale stays
+  // side by side; the icons and the colours are not translatable and stay here.
   const steps = [
-    { step: '01', emoji: '💬', title: 'home.how.1.title', desc: 'home.how.1.desc' },
-    { step: '02', emoji: '🤝', title: 'home.how.2.title', desc: 'home.how.2.desc' },
-    { step: '03', emoji: '✨', title: 'home.how.3.title', desc: 'home.how.3.desc' },
+    { step: '01', icon: ICON.chat, title: 'home.how.1.title', desc: 'home.how.1.desc' },
+    { step: '02', icon: ICON.connect, title: 'home.how.2.title', desc: 'home.how.2.desc' },
+    { step: '03', icon: ICON.check, title: 'home.how.3.title', desc: 'home.how.3.desc' },
   ] as const
 
   const services = [
@@ -35,9 +64,9 @@ export default function Home() {
   ] as const
 
   const trust = [
-    { emoji: '🪪', title: 'home.trust.identity.title', desc: 'home.trust.identity.desc' },
-    { emoji: '🔒', title: 'home.trust.docs.title', desc: 'home.trust.docs.desc' },
-    { emoji: '💬', title: 'home.trust.record.title', desc: 'home.trust.record.desc' },
+    { icon: ICON.id, title: 'home.trust.identity.title', desc: 'home.trust.identity.desc' },
+    { icon: ICON.lock, title: 'home.trust.docs.title', desc: 'home.trust.docs.desc' },
+    { icon: ICON.chat, title: 'home.trust.record.title', desc: 'home.trust.record.desc' },
   ] as const
 
   return (
@@ -144,7 +173,9 @@ export default function Home() {
             {steps.map(item => (
               <div key={item.step}>
                 <div className="text-xs font-bold text-[#7FB3FF] mb-4 tracking-widest">{item.step}</div>
-                <div className="text-4xl mb-4">{item.emoji}</div>
+                <div className="w-12 h-12 mx-auto rounded-full bg-brand-soft text-brand-strong flex items-center justify-center mb-4">
+                  <Icon path={item.icon} className="w-6 h-6" />
+                </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">{t(item.title)}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{t(item.desc)}</p>
               </div>
@@ -183,7 +214,9 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-6">
             {trust.map(item => (
               <div key={item.title} className="bg-[#FAFCFF] rounded-2xl p-6">
-                <div className="text-3xl mb-4">{item.emoji}</div>
+                <div className="w-10 h-10 rounded-full bg-brand-soft text-brand-strong flex items-center justify-center mb-4">
+                  <Icon path={item.icon} className="w-5 h-5" />
+                </div>
                 <h3 className="font-bold text-gray-900 mb-2">{t(item.title)}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{t(item.desc)}</p>
               </div>
