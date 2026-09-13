@@ -27,7 +27,7 @@ export default function AdminOperations() {
         supabase.from('matches').select(`
           *,
           caregiver_profiles ( user_id, services, languages, hourly_rate_min, hourly_rate_max, years_experience, bio, is_verified, background_check_status, onboarding_answers ),
-          service_requests ( family_profiles ( user_id, onboarding_answers, users ( full_name, email, avatar_url ) ) )
+          service_requests ( family_profiles ( user_id, onboarding_answers ) )
         `).order('created_at', { ascending: false }),
         supabase.from('users_admin').select('id, full_name, email, role, avatar_url, created_at').order('created_at', { ascending: false }).limit(20),
       ])

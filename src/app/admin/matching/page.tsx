@@ -49,7 +49,7 @@ export default function AdminMatching() {
           caregiver_profiles ( user_id, services, languages, hourly_rate_min, hourly_rate_max, years_experience, bio ),
           service_requests (
             id, service_type, status, ai_job_post,
-            family_profiles ( user_id, onboarding_answers, users ( full_name, email, avatar_url ) )
+            family_profiles ( user_id, onboarding_answers, users ( full_name, avatar_url ) )
           )
         `)
         .order('created_at', { ascending: false })
