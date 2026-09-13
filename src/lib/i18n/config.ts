@@ -2,7 +2,7 @@
 // src/app/layout.tsx (a server component), src/proxy.ts (the edge proxy) and
 // the client provider all import this, so it must stay importable anywhere.
 
-export const LOCALES = ['en', 'zh'] as const
+export const LOCALES = ['en', 'zh', 'es'] as const
 export type Locale = (typeof LOCALES)[number]
 
 // The fallback when we know NOTHING about the visitor — no cookie, no usable
@@ -39,10 +39,10 @@ export function normalizeLocale(value: unknown): Locale {
  * speak. Highest q wins; equal q keeps the order the browser sent (Array#sort
  * is stable), which is the order the reader ranked them in.
  *
- * Every zh variant maps to our one Chinese locale, which is Simplified. A
- * zh-TW or zh-HK reader gets Simplified rather than English — the wrong script
- * is still far closer to readable than the wrong language, and the toggle is
- * one tap away.
+ * Only the primary subtag is matched, so every regional variant collapses onto
+ * the locale we carry: zh-TW and zh-HK get Simplified Chinese, es-MX, es-419
+ * and es-US all get the one Spanish. The wrong region is far closer to readable
+ * than the wrong language, and the switch is one tap away.
  */
 export function localeFromAcceptLanguage(header: string | null | undefined): Locale | null {
   if (typeof header !== 'string' || header.trim().length === 0) return null
@@ -93,6 +93,10 @@ export function resolveLocale({
 export const HTML_LANG: Record<Locale, string> = {
   en: 'en',
   zh: 'zh-CN',
+  // es-US, not es: the copy is written for Spanish speakers in the United
+  // States, and the tag is what a screen reader and the browser's own
+  // translation prompt key off.
+  es: 'es-US',
 }
 
 // og:locale wants the underscored POSIX-ish form, not the BCP-47 one. This is
@@ -100,9 +104,11 @@ export const HTML_LANG: Record<Locale, string> = {
 export const OG_LOCALE: Record<Locale, string> = {
   en: 'en_US',
   zh: 'zh_CN',
+  es: 'es_US',
 }
 
 export const LOCALE_LABEL: Record<Locale, string> = {
   en: 'EN',
   zh: '中文',
+  es: 'ES',
 }

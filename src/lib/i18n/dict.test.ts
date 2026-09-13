@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { DICT, en, zh } from './dict.ts'
+import { DICT, en, zh, type MessageKey } from './dict.ts'
 import {
   LOCALES,
   DEFAULT_LOCALE,
@@ -18,15 +18,19 @@ import {
 // translated. `npm test` runs them.
 
 describe('i18n dictionary', () => {
-  it('en and zh carry exactly the same keys', () => {
+  it('every locale carries exactly the same keys as en', () => {
+    // Iterates LOCALES rather than naming the locales, so adding a fourth
+    // language is covered the moment it is added to the list.
     const enKeys = Object.keys(en).sort()
-    const zhKeys = Object.keys(zh).sort()
 
-    const missingInZh = enKeys.filter(k => !zhKeys.includes(k))
-    const extraInZh = zhKeys.filter(k => !enKeys.includes(k))
+    for (const locale of LOCALES) {
+      const keys = Object.keys(DICT[locale]).sort()
+      const missing = enKeys.filter(k => !keys.includes(k))
+      const extra = keys.filter(k => !enKeys.includes(k))
 
-    assert.deepEqual(missingInZh, [], `missing from zh: ${missingInZh.join(', ')}`)
-    assert.deepEqual(extraInZh, [], `in zh but not en: ${extraInZh.join(', ')}`)
+      assert.deepEqual(missing, [], `missing from ${locale}: ${missing.join(', ')}`)
+      assert.deepEqual(extra, [], `in ${locale} but not en: ${extra.join(', ')}`)
+    }
   })
 
   it('no string is empty or whitespace-only in any locale', () => {
@@ -38,32 +42,40 @@ describe('i18n dictionary', () => {
     }
   })
 
-  it('every zh string that should differ from en actually does', () => {
-    // Add a key here only when the two locales are legitimately the same
-    // string — a brand name, a bare symbol. Everything else being identical
-    // means the English was pasted in and never translated.
+  it('every translated string that should differ from en actually does', () => {
+    // Add a key here only when the locales are legitimately the same string —
+    // a brand name, a bare symbol, a proper noun. Everything else being
+    // identical means the English was pasted in and never translated.
     const ALLOWED_IDENTICAL = new Set<string>([
       // The name on the hero mockup card. Same name in every locale by design.
       'home.card.matchName',
     ])
 
-    const untranslated = Object.keys(en).filter(
-      k =>
-        !ALLOWED_IDENTICAL.has(k) &&
-        zh[k as keyof typeof en] === en[k as keyof typeof en]
-    )
+    for (const locale of LOCALES) {
+      if (locale === 'en') continue
 
-    assert.deepEqual(
-      untranslated,
-      [],
-      `identical to the English, so probably untranslated: ${untranslated.join(', ')}`
-    )
+      const untranslated = Object.keys(en).filter(
+        k =>
+          !ALLOWED_IDENTICAL.has(k) &&
+          DICT[locale][k as MessageKey] === en[k as keyof typeof en]
+      )
+
+      assert.deepEqual(
+        untranslated,
+        [],
+        `${locale}: identical to the English, so probably untranslated: ${untranslated.join(', ')}`
+      )
+    }
   })
 
   it('every zh string actually contains Chinese', () => {
     // Catches the other half of the same mistake: a string that was edited but
     // is still Latin-only. Keys whose value is deliberately symbolic (emoji,
     // punctuation, a proper noun) are exempt.
+    //
+    // There is no equivalent script check for Spanish — it shares the Latin
+    // alphabet with the English, so the "differs from en" test above is the
+    // only automatic signal there.
     const EXEMPT = new Set<string>(['home.card.matchName'])
     const HAN = /\p{Script=Han}/u
 
@@ -125,8 +137,18 @@ describe('locale negotiation', () => {
     }
   })
 
+  it('maps every Spanish variant onto our one Spanish locale', () => {
+    // The copy is written for the United States, but a Mexican, Argentine or
+    // Latin-American-generic header is still a Spanish reader.
+    for (const tag of ['es-MX', 'es-419', 'es-AR', 'es-us']) {
+      assert.equal(localeFromAcceptLanguage(tag), 'es', tag)
+    }
+  })
+
   it('returns null when the header asks for nothing we speak', () => {
-    for (const header of ['fr-FR,fr;q=0.9', 'es', '*', '', '   ', null, undefined]) {
+    // 'es' used to be the example of a language we do not speak. It is a
+    // supported locale now, so the fixture moved to German.
+    for (const header of ['fr-FR,fr;q=0.9', 'de', '*', '', '   ', null, undefined]) {
       assert.equal(localeFromAcceptLanguage(header), null, JSON.stringify(header))
     }
   })

@@ -189,4 +189,95 @@ export const zh: Record<MessageKey, string> = {
   'home.cta.caregiverLink': '从这里加入',
 }
 
-export const DICT: Record<Locale, Record<MessageKey, string>> = { en, zh }
+// ── THE SPANISH IS A FIRST DRAFT TOO ─────────────────────────────────
+// Written for Spanish speakers in the United States: `niñera` rather than
+// `canguro`, `tú` rather than `usted` or `vosotros`, and `match` left in place
+// where US Spanish already uses it. Same caveat as the Chinese above — it
+// carries the meaning but has not been written to sell. The hero
+// (`home.hero.*`) and the CTA (`home.cta.*`) are the lines most worth a
+// native rewrite.
+//
+// Gendered nouns: the caregiver side is mostly but not only women, so the
+// generic plural is `cuidadores` and the singular is written `cuidador(a)`
+// rather than assuming. `home.cta.title` is addressed to the family in the
+// plural (`¿Listos...?`) to avoid picking a gender for one reader.
+//
+// LAYOUT: Spanish runs roughly 20-30% longer than the English. The hero
+// headline wraps to an extra line below about 380px, which is expected.
+export const es: Record<MessageKey, string> = {
+  'meta.title': 'Ruah — cuidado de niños para familias de DC, sin tener que insistir',
+  'meta.description':
+    'Dinos qué necesita tu familia. Ruah contacta a los cuidadores, les da seguimiento y te cuenta cómo va — así no eres tú quien anda persiguiendo respuestas.',
+
+  'nav.signin': 'Iniciar sesión',
+  'nav.getStarted': 'Comenzar',
+  'lang.switchTo': 'Cambiar idioma',
+
+  'home.hero.badge': '✨ Cuidado familiar con IA',
+  'home.hero.line1': 'Encuentra cuidado de confianza',
+  'home.hero.line2': 'para tu familia —',
+  'home.hero.line3': 'sin el estrés.',
+  'home.hero.sub':
+    'Conectamos a tu familia con la persona indicada, de forma automática. Niñeras, cuidado por horas, después de la escuela y para recién nacidos — cuidado que se siente bien.',
+  'home.hero.ctaFamily': 'Buscar cuidador(a) →',
+  'home.hero.ctaCaregiver': 'Soy cuidador(a)',
+  'home.hero.assurances': '✓ Explorar es gratis   ✓ Cuidadores verificados   ✓ Sin compromiso',
+  'home.hero.humanPrompt': '¿Prefieres empezar con una persona?',
+  'home.hero.humanLink': 'Agenda 30 minutos con el equipo de Ruah →',
+
+  'home.card.greeting': '¡Hola! ¡Soy Ruah! 👋',
+  'home.card.matchFound': '¡Match encontrado! 🎉',
+  'home.card.matchName': 'Sarah Chen',
+  'home.card.matchMeta': '⭐ 4.9 · Habla mandarín',
+  'home.card.checkLabel': 'Verificación de antecedentes',
+  'home.card.checkValue': 'Verificado ✓',
+
+  'home.how.title': 'Cómo funciona Ruah',
+  'home.how.sub': 'Simple, rápido y sin estrés',
+  'home.how.1.title': 'Cuéntanos qué necesitas',
+  'home.how.1.desc':
+    'Responde unas preguntas rápidas sobre tu familia y el tipo de ayuda que buscas.',
+  'home.how.2.title': 'Encontramos tu match',
+  'home.how.2.desc':
+    'Nuestra IA revisa a los cuidadores según tu horario, idioma, presupuesto y preferencias.',
+  'home.how.3.title': 'Conoce y contrata',
+  'home.how.3.desc':
+    'Conéctate con tus mejores opciones, conversa y contrata — todo en un solo lugar.',
+
+  'home.services.title': 'Cuidado de niños, como lo necesites',
+  'home.services.sub': 'Desde ayuda de tiempo completo hasta una noche ocasional',
+  'home.services.fulltime.label': 'Niñera de tiempo completo',
+  'home.services.fulltime.desc': 'Cuidado entre semana en tu casa',
+  'home.services.afterschool.label': 'Después de la escuela',
+  'home.services.afterschool.desc': 'Recoger, tareas, cena',
+  'home.services.evenings.label': 'Noches y fines de semana',
+  'home.services.evenings.desc': 'Salidas en pareja y ocasiones puntuales',
+  'home.services.newborn.label': 'Apoyo con recién nacidos',
+  'home.services.newborn.desc': 'Los primeros meses en casa',
+  'home.services.bilingual.label': 'Cuidado bilingüe',
+  'home.services.bilingual.desc': 'Mandarín, cantonés, español',
+  'home.services.breaks.label': 'Vacaciones escolares',
+  'home.services.breaks.desc': 'Días feriados y verano',
+
+  'home.trust.title': 'Cómo manejamos la confianza',
+  'home.trust.sub': 'Qué verificamos y qué no. Sin rodeos.',
+  'home.trust.identity.title': 'Identidad verificada',
+  'home.trust.identity.desc':
+    'A cada cuidador verificado, una persona de nuestro equipo le revisó una identificación oficial y una selfie.',
+  'home.trust.docs.title': 'Los documentos son privados',
+  'home.trust.docs.desc':
+    'Las fotos de identificación se guardan de forma privada y nunca se les muestran a las familias. Nunca.',
+  'home.trust.record.title': 'La coordinación ocurre en Ruah',
+  'home.trust.record.desc':
+    'Los mensajes y los compromisos que cada persona asume quedan en la plataforma, así siempre hay un registro.',
+  'home.trust.noChecks': 'No hacemos verificación de antecedentes.',
+  'home.trust.noChecksLink': 'Qué significa eso y cómo hacer la tuya por tu cuenta →',
+
+  'home.cta.title': '¿Listos para encontrar a la persona indicada?',
+  'home.cta.sub': 'Empieza en minutos. No se necesita tarjeta de crédito.',
+  'home.cta.button': 'Buscar cuidado para mi familia →',
+  'home.cta.caregiverPrompt': '¿Eres cuidador(a)?',
+  'home.cta.caregiverLink': 'Regístrate aquí',
+}
+
+export const DICT: Record<Locale, Record<MessageKey, string>> = { en, zh, es }
