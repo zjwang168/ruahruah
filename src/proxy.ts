@@ -66,11 +66,32 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user) {
-    // Fetch ban status + role in one query
-    const { data: userData } = await supabase
+    const segments = pathname.split('/').filter(Boolean) // e.g. ['caregiver', 'dashboard']
+    const isGatedPage =
+      segments[0] === 'admin' ||
+      segments[0] === 'family' ||
+      (segments[0] === 'caregiver' && CAREGIVER_PRIVATE_PAGES.includes(segments[1]))
+
+    // Ban status + role in one query. maybeSingle(), not single(), so that
+    // "no row yet" — the window between supabase.auth.signUp and the users
+    // insert on the register page — comes back as data:null with NO error.
+    // That leaves `error` meaning exactly one thing: the read itself failed.
+    const { data: userData, error: userErr } = await supabase
       .from('user_self')
       .select('is_banned, ban_reason, role')
-      .single()
+      .maybeSingle()
+
+    // A failed read means we do not know whether this account is banned, and
+    // `userData?.is_banned` would quietly answer "not banned" — which is how a
+    // ban stops being enforced with nothing on screen looking broken. A
+    // renamed view or a revoked grant is enough to trigger it. Fail closed:
+    // the signed-in surfaces stay shut until the read works again. Public
+    // pages, including the caregiver profile pages, are unaffected.
+    if (userErr) {
+      console.error('proxy: user_self read failed —', userErr.message)
+      if (isGatedPage) return NextResponse.redirect(new URL('/', request.url))
+      return supabaseResponse
+    }
 
     // Ban check
     if (userData?.is_banned) {
@@ -99,7 +120,6 @@ export async function proxy(request: NextRequest) {
 
     // Caregiver PRIVATE pages: only caregiver role (admins allowed).
     // Public caregiver profile pages (/caregiver/{uuid}) are NOT restricted.
-    const segments = pathname.split('/').filter(Boolean) // e.g. ['caregiver', 'dashboard']
     if (segments[0] === 'caregiver' && CAREGIVER_PRIVATE_PAGES.includes(segments[1])) {
       if (role !== 'caregiver' && !isAdmin) {
         return NextResponse.redirect(new URL('/family/dashboard', request.url))

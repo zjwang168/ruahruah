@@ -47,6 +47,26 @@ async function getLatLng(zipcode: string) {
   return result
 }
 
+// The precision that crosses the wire is itself a disclosure. A caregiver can
+// edit her OWN zipcode (/caregiver/profile writes users.zipcode), so a
+// full-precision mileage is a ruler she can re-aim: set a zip, read the
+// distance, move, read again. Three readings and the family's zip centroid
+// falls out of the intersection — which is the value this route exists to keep
+// on the server.
+//
+// The board renders `distance < 1 ? '< 1' : Math.round(distance)`, so whole
+// miles is all the UI has ever shown. Rounding here costs the product nothing
+// and stops the wire carrying more than the screen does. Sub-mile collapses to
+// 0 so the '< 1' label still reads the same.
+//
+// This narrows the leak rather than closing it: whole miles still trilaterates
+// to a few square miles. Closing it entirely means returning only the
+// 10/25/50/100 filter buckets and dropping the exact figure from the card —
+// a product call, not one to make here.
+function quantize(miles: number) {
+  return miles < 1 ? 0 : Math.round(miles)
+}
+
 function milesBetween(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 3958.8
   const dLat = (lat2 - lat1) * Math.PI / 180
@@ -97,11 +117,12 @@ export async function POST(req: NextRequest) {
       if (!zip) continue
       const there = await getLatLng(zip)
       if (there) {
-        distances[(row as any).id] = milesBetween(myLatLng.lat, myLatLng.lng, there.lat, there.lng)
+        distances[(row as any).id] =
+          quantize(milesBetween(myLatLng.lat, myLatLng.lng, there.lat, there.lng))
       }
     }
 
-    // 5. Miles only. No zipcode has left the server.
+    // 5. Whole miles only. No zipcode has left the server.
     return NextResponse.json({ distances })
   } catch (err) {
     console.error('request-distances error:', err)
