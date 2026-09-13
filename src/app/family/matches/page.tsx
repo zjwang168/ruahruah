@@ -149,7 +149,7 @@ export default function FamilyMatchesPage() {
       if (familyData?.id) {
         const { data } = await supabase
           .from('matches')
-          .select(`*, service_requests!inner(family_id, service_type), caregiver_profiles(user_id, services, languages, hourly_rate_min, hourly_rate_max, years_experience, bio, is_verified, onboarding_answers, users(full_name, email, avatar_url))`)
+          .select(`*, service_requests!inner(family_id, service_type), caregiver_profiles(user_id, services, languages, hourly_rate_min, hourly_rate_max, years_experience, bio, is_verified, onboarding_answers, users(full_name, avatar_url))`)
           .eq('service_requests.family_id', familyData.id)
           .order('created_at', { ascending: false })
         matchesData = data || []

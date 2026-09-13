@@ -250,6 +250,24 @@ async function phaseFamily(fx) {
     !embed.error && (embed.data?.length ?? 0) > 0,
     embed.error?.message ?? 'no rows')
 
+  // The assertion above is a SHORTER select than the one the pages actually
+  // run, and that gap cost a live outage: /family/matches and
+  // /family/dashboard select `users(full_name, email, avatar_url)` nested two
+  // levels down, and the 20260805 column grant made `email` unreadable for
+  // `authenticated`. PostgREST answers the whole query with 42501 — both
+  // pages went blank and nothing here noticed, because this suite was asking
+  // a question the product does not ask.
+  //
+  // So this one is copied VERBATIM from the pages. If they change, change it.
+  const PAGE_MATCHES_SELECT =
+    '*, service_requests!inner(family_id, service_type), ' +
+    'caregiver_profiles(user_id, services, languages, hourly_rate_min, hourly_rate_max, ' +
+    'years_experience, bio, is_verified, onboarding_answers, users(full_name, avatar_url))'
+  const pageEmbed = await c.from('matches').select(PAGE_MATCHES_SELECT).limit(5)
+  check('family matches embed, the select the PAGES actually run',
+    !pageEmbed.error,
+    `${code(pageEmbed) ?? ''} ${pageEmbed.error?.message ?? ''}`)
+
   const notifs = await c.from('notifications').select('user_id')
   const foreignN = (notifs.data ?? []).filter(n => n.user_id !== userId)
   check('family sees only its own notifications',
