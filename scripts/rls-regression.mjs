@@ -25,6 +25,7 @@
 // Sessions are minted through the Admin API's magic-link tokens rather than
 // passwords — no credentials needed and no account is modified.
 
+import { scanSelects, pendingBreakage } from './lib/scan-selects.mjs'
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'node:fs'
 
@@ -512,6 +513,84 @@ async function phaseColumnGrants(fx) {
     `error=${code(embedFam)} ${embedFam.error?.message ?? ''}`)
 }
 
+// ---------------------------------------------------------------------------
+// PHASE 6 — every browser-side select, exactly as the source writes it.
+//
+// Not a list. scripts/lib/scan-selects.mjs reads src/ at RUN TIME, pairs each
+// .select( ... ) with its .from( ... ) across newlines, drops the ones held by
+// a service-role client, and hands them back. Change a page's select and the
+// next run asserts the new one — there is nothing here for anyone to forget to
+// update, which is the whole point.
+//
+// What it catches: PostgREST answers the WHOLE query with 42501 when a select
+// names a column the caller cannot read, rather than dropping that column. On
+// 2026-09-13 that took four pages down — twice — while this suite was green,
+// because the suite was asking shorter questions than the product asks.
+//
+// Filters are deliberately NOT replayed. The shape of the select is what
+// breaks; zero rows is a perfectly good answer and RLS produces it constantly.
+// Only a permission or schema error counts as a failure.
+// ---------------------------------------------------------------------------
+
+const FATAL = new Set([
+  '42501',    // permission denied — a column the role may not read
+  '42703',    // column does not exist
+  '42P01',    // relation does not exist — a view that was never created
+  'PGRST200', // no relationship found — a broken embed
+  'PGRST202',
+])
+
+async function phaseSourceSelects(fx) {
+  section('PHASE 6 — every browser-side select, as the source writes it')
+
+  const { found, skipped } = scanSelects()
+
+  const sessions = {}
+  for (const [role, fixture] of [['family', fx.family], ['caregiver', fx.caregiver], ['admin', fx.admin]]) {
+    if (!fixture) continue
+    try { sessions[role] = (await sessionFor(fixture.email)).client } catch { /* reported below */ }
+  }
+  for (const role of ['family', 'caregiver', 'admin']) {
+    check(`session available for ${role}`, !!sessions[role], 'no fixture, or sign-in failed')
+  }
+
+  let ran = 0
+  const failures = []
+  for (const rec of found) {
+    for (const role of rec.roles) {
+      const c = sessions[role]
+      if (!c) continue
+      ran++
+      const r = await c.from(rec.table).select(rec.select).limit(1)
+      if (r.error && FATAL.has(r.error.code)) {
+        failures.push(`${rec.where} [${role}] ${rec.table} → ${r.error.code} ${r.error.message}`)
+      }
+    }
+  }
+
+  // One line per failure, so a break names the file and line to open. The
+  // passing case stays a single line rather than a hundred.
+  for (const f of failures) check(f, false)
+  check(`${ran} browser-side selects run, ${found.length} found in src/`,
+    failures.length === 0, `${failures.length} failed`)
+
+  for (const s of skipped) {
+    check(`NOT ASSERTED — ${s.where} (${s.reason})`, true)
+  }
+
+  // The half the live run CANNOT see. A migration that is written but not yet
+  // applied leaves the grant in place, so these selects still work today and
+  // are already scheduled to break. Failing here is the point: it moves the
+  // discovery from "the morning after the migration" to "the moment the
+  // migration was written".
+  const pending = pendingBreakage()
+  for (const p of pending) {
+    check(`PENDING — ${p.where} [${p.roles.join('|')}] names ${p.table}.${p.column}, which a written migration withholds`, false)
+  }
+  check('no browser-side select names a column a pending migration withholds',
+    pending.length === 0, `${pending.length} to fix before STEP 2 runs`)
+}
+
 async function main() {
   const fx = await fixtures()
   if (!fx.family || !fx.caregiver) {
@@ -524,6 +603,7 @@ async function main() {
     await phaseCaregiver(fx)
     await phaseAdmin(fx)
     await phaseColumnGrants(fx)
+    await phaseSourceSelects(fx)
   } finally {
     await sweepProbeRows()
     console.log(results.join('\n'))

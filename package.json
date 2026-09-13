@@ -9,7 +9,8 @@
     "lint": "eslint",
     "rls:check": "node scripts/rls-regression.mjs",
     "test": "node --experimental-strip-types --test \"src/**/*.test.ts\"",
-    "test:watch": "node --experimental-strip-types --test --watch \"src/**/*.test.ts\""
+    "test:watch": "node --experimental-strip-types --test --watch \"src/**/*.test.ts\"",
+    "scan:selects": "node scripts/lib/scan-selects.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
