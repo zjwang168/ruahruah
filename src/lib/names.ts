@@ -16,14 +16,19 @@ export function isValidName(value: string): boolean {
   return NAME_RE.test(value.trim())
 }
 
-/** The first thing wrong with the pair, or null when both are fine. */
-export function nameError(first: string, last: string): string | null {
+/**
+ * The first thing wrong with the pair, as a MESSAGE KEY, or null when both are
+ * fine. A key rather than a sentence because these surface in three languages
+ * and the caller is the one holding the dictionary — and because the thing a
+ * form must never show is the raw constraint violation from Postgres.
+ */
+export type NameErrorKey = 'auth.err.nameBoth' | 'auth.err.nameLatin'
+
+export function nameError(first: string, last: string): NameErrorKey | null {
   const f = first.trim()
   const l = last.trim()
-  if (!f || !l) return 'Enter both a first and a last name.'
-  if (!isValidName(f) || !isValidName(l)) {
-    return 'Please use the Latin alphabet — letters, apostrophes and hyphens.'
-  }
+  if (!f || !l) return 'auth.err.nameBoth'
+  if (!isValidName(f) || !isValidName(l)) return 'auth.err.nameLatin'
   return null
 }
 

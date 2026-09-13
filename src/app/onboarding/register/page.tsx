@@ -3,14 +3,17 @@
 import { useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { nameError, fullName as joinName } from '@/lib/names'
+import { nameError } from '@/lib/names'
+import { useT } from '@/lib/i18n/provider'
+import { createAccountRows, stashPendingSignup, type SignupRole } from '@/lib/signup'
 
 function RegisterForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const supabase = createClient()
+  const t = useT()
 
-  const role = searchParams.get('role') as 'family' | 'caregiver'
+  const role = searchParams.get('role') as SignupRole
   const answers = JSON.parse(decodeURIComponent(searchParams.get('answers') || '{}'))
 
   const [firstName, setFirstName] = useState('')
@@ -24,59 +27,31 @@ function RegisterForm() {
     // Before signUp: a failed users insert would strand an auth account with
     // no row, no role and nowhere to be routed.
     const nameProblem = nameError(firstName, lastName)
-    if (nameProblem) { setError(nameProblem); return }
+    if (nameProblem) { setError(t(nameProblem)); return }
 
     setLoading(true)
     setError('')
 
     const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
     if (signUpError) { setError(signUpError.message); setLoading(false); return }
+    if (!data.user) { setLoading(false); return }
 
-    if (data.user) {
-      const { error: userError } = await supabase.from('users').insert({
-        id: data.user.id,
-        email,
-        role,
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        full_name: joinName(firstName, lastName),
-        zipcode: answers.zipcode || null,
-        city: answers.city || null,
-        state: answers.state || null,
-      })
-      if (userError) { setError(userError.message); setLoading(false); return }
+    const { errorKey } = await createAccountRows(supabase, {
+      userId: data.user.id, email, role, firstName, lastName, answers,
+    })
+    if (errorKey) { setError(t(errorKey)); setLoading(false); return }
 
-      if (role === 'family') {
-        await supabase.from('family_profiles').insert({
-          user_id: data.user.id,
-          languages: answers.languages || [],
-          onboarding_answers: answers,
-        })
-        router.push('/family/dashboard')
-      } else {
-        const rateStr = answers.rate || ''
-        const rateParts = rateStr.replace(/\$/g, '').split('–')
-        const rateMin = rateParts[0] ? Number(rateParts[0].trim()) : null
-        const rateMax = rateParts[1] ? Number(rateParts[1].trim()) : null
-
-        await supabase.from('caregiver_profiles').insert({
-          user_id: data.user.id,
-          services: answers.services || [],
-          languages: answers.languages || [],
-          years_experience: Number(answers.experience) || 0,
-          hourly_rate_min: rateMin,
-          hourly_rate_max: rateMax,
-          onboarding_answers: answers,
-        })
-        router.push('/caregiver/dashboard')
-      }
-    }
+    router.push(`/${role}/dashboard`)
   }
 
   const handleGoogle = async () => {
+    // The round trip to Google drops the query string, and the intake answers
+    // have no business in a third party's referrer log either — so the funnel
+    // context waits in sessionStorage and /auth/complete picks it up.
+    stashPendingSignup(role, answers)
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/${role}/dashboard` }
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/auth/complete` }
     })
   }
 
@@ -85,8 +60,8 @@ function RegisterForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img src="/ruah-logo.png" alt="Ruah" className="w-14 h-14 mx-auto mb-3" />
-          <h1 className="text-2xl font-bold text-gray-900">Almost there!</h1>
-          <p className="text-gray-400 text-sm mt-1">Create your account to see your matches</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('auth.onboarding.title')}</h1>
+          <p className="text-gray-400 text-sm mt-1">{t('auth.onboarding.sub')}</p>
         </div>
 
         {error && (
@@ -101,12 +76,12 @@ function RegisterForm() {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          Continue with Google
+          {t('auth.google')}
         </button>
 
         <div className="flex items-center gap-3 my-4">
           <div className="flex-1 h-px bg-gray-200" />
-          <span className="text-gray-400 text-sm">or</span>
+          <span className="text-gray-400 text-sm">{t('auth.or')}</span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
@@ -114,29 +89,26 @@ function RegisterForm() {
           <div className="grid grid-cols-2 gap-3">
             <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
               className="w-full border border-gray-200 rounded-2xl px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#7FB3FF]"
-              placeholder="First name" />
+              placeholder={t('auth.field.firstName')} aria-label={t('auth.field.firstName')} />
             <input type="text" value={lastName} onChange={e => setLastName(e.target.value)}
               className="w-full border border-gray-200 rounded-2xl px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#7FB3FF]"
-              placeholder="Last name" />
+              placeholder={t('auth.field.lastName')} aria-label={t('auth.field.lastName')} />
           </div>
-          <p className="text-xs text-gray-400 px-1">
-            Others see you as “Sarah C.” — your last name is never shown.
-          </p>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)}
             className="w-full border border-gray-200 rounded-2xl px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#7FB3FF]"
-            placeholder="Email address" />
+            placeholder={t('auth.field.email')} aria-label={t('auth.field.email')} />
           <input type="password" value={password} onChange={e => setPassword(e.target.value)}
             className="w-full border border-gray-200 rounded-2xl px-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#7FB3FF]"
-            placeholder="Password (8+ characters)" />
+            placeholder={`${t('auth.field.password')} — ${t('auth.field.passwordHint')}`} aria-label={t('auth.field.password')} />
           <button onClick={handleRegister} disabled={loading || !firstName.trim() || !lastName.trim() || !email || !password}
             className="w-full text-white py-4 rounded-2xl font-semibold disabled:opacity-40 transition"
             style={{ background: 'linear-gradient(135deg, #7FB3FF 0%, #A78BFA 100%)' }}>
-            {loading ? 'Creating account...' : 'Create account →'}
+            {loading ? t('auth.register.submitting') : `${t('auth.register.submit')} →`}
           </button>
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          By continuing, you agree to our Terms of Service and Privacy Policy
+          {t('auth.register.terms')}
         </p>
       </div>
     </div>

@@ -19,13 +19,14 @@ describe('name shape', () => {
   })
 
   it('requires both halves', () => {
-    assert.match(nameError('Sarah', '') ?? '', /both/)
-    assert.match(nameError('', 'Chen') ?? '', /both/)
+    assert.equal(nameError('Sarah', ''), 'auth.err.nameBoth')
+    assert.equal(nameError('', 'Chen'), 'auth.err.nameBoth')
     assert.equal(nameError('Sarah', 'Chen'), null)
   })
 
-  it('explains a non-Latin name rather than just refusing', () => {
-    assert.match(nameError('李', '明华') ?? '', /Latin/)
+  it('names the non-Latin case separately, so the form can explain it', () => {
+    assert.equal(nameError('李', '明华'), 'auth.err.nameLatin')
+    assert.equal(nameError('123', '456'), 'auth.err.nameLatin')
   })
 })
 

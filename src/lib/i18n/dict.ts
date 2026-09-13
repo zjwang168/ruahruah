@@ -112,6 +112,42 @@ export const en = {
   'home.cta.button': 'Find care for my family →',
   'home.cta.caregiverPrompt': 'Are you a caregiver?',
   'home.cta.caregiverLink': 'Join here',
+
+  // ── auth: register, and the OAuth name confirmation ──
+  // The onboarding and dashboard surfaces are still English-only; these are
+  // the pages a visitor meets before either of those.
+  'auth.register.title': 'Create your account',
+  'auth.register.sub': 'Join Ruah to find the right care for your family',
+  'auth.register.rolePrompt': 'I am a...',
+  'auth.register.role.family': '👨‍👩‍👧 Family',
+  'auth.register.role.familyDesc': "I'm looking for care services",
+  'auth.register.role.caregiver': '🤝 Caregiver / Helper',
+  'auth.register.role.caregiverDesc': 'I provide care services',
+  'auth.register.submit': 'Create account',
+  'auth.register.submitting': 'Creating account…',
+  'auth.register.terms': 'By continuing, you agree to our Terms of Service and Privacy Policy',
+
+  'auth.onboarding.title': 'Almost there!',
+  'auth.onboarding.sub': 'Create your account to see your matches',
+  'auth.google': 'Continue with Google',
+  'auth.or': 'or',
+
+  'auth.field.firstName': 'First name',
+  'auth.field.lastName': 'Last name',
+  'auth.field.email': 'Email',
+  'auth.field.password': 'Password',
+  'auth.field.passwordHint': 'At least 8 characters',
+
+  'auth.complete.title': 'One last thing',
+  'auth.complete.sub': 'Confirm how your name should appear',
+  'auth.complete.checking': 'Checking your account…',
+  'auth.complete.submit': 'Continue',
+  'auth.complete.submitting': 'Saving…',
+
+  'auth.err.nameBoth': 'Enter both a first and a last name.',
+  'auth.err.nameLatin': 'Please use the Latin alphabet — letters, apostrophes and hyphens.',
+  'auth.err.saveFailed': 'We could not finish setting up your account. Please try again.',
+  'auth.err.oauth': 'Sign-in did not complete. Please try again.',
 } as const
 
 export type MessageKey = keyof typeof en
@@ -185,6 +221,40 @@ export const zh: Record<MessageKey, string> = {
   'home.cta.button': '为我的家庭找照护 →',
   'home.cta.caregiverPrompt': '你是照护者吗？',
   'home.cta.caregiverLink': '从这里加入',
+
+  'auth.register.title': '创建账号',
+  'auth.register.sub': '加入 Ruah，为家里找到合适的照护者',
+  'auth.register.rolePrompt': '我是……',
+  'auth.register.role.family': '👨‍👩‍👧 家庭',
+  'auth.register.role.familyDesc': '我想找照护服务',
+  'auth.register.role.caregiver': '🤝 照护者',
+  'auth.register.role.caregiverDesc': '我提供照护服务',
+  'auth.register.submit': '创建账号',
+  'auth.register.submitting': '正在创建……',
+  'auth.register.terms': '继续即表示你同意我们的服务条款与隐私政策',
+
+  'auth.onboarding.title': '就差一步！',
+  'auth.onboarding.sub': '创建账号，查看为你匹配的人选',
+  'auth.google': '使用 Google 继续',
+  'auth.or': '或',
+
+  'auth.field.firstName': '名',
+  'auth.field.lastName': '姓',
+  'auth.field.email': '邮箱',
+  'auth.field.password': '密码',
+  'auth.field.passwordHint': '至少 8 位',
+
+  'auth.complete.title': '还有最后一步',
+  'auth.complete.sub': '确认一下你的名字怎么显示',
+  'auth.complete.checking': '正在确认账号……',
+  'auth.complete.submit': '继续',
+  'auth.complete.submitting': '保存中……',
+
+  'auth.err.nameBoth': '请填写名和姓。',
+  'auth.err.nameLatin': '请使用拉丁字母：字母、撇号和连字符。',
+  'auth.err.saveFailed': '账号没能创建完成，请再试一次。',
+  'auth.err.oauth': '登录没有完成，请再试一次。',
+
 }
 
 // ── THE SPANISH IS A FIRST DRAFT TOO ─────────────────────────────────
@@ -275,6 +345,40 @@ export const es: Record<MessageKey, string> = {
   'home.cta.button': 'Buscar cuidado para mi familia →',
   'home.cta.caregiverPrompt': '¿Eres cuidador(a)?',
   'home.cta.caregiverLink': 'Regístrate aquí',
+
+  'auth.register.title': 'Crea tu cuenta',
+  'auth.register.sub': 'Únete a Ruah y encuentra el cuidado indicado para tu familia',
+  'auth.register.rolePrompt': 'Soy…',
+  'auth.register.role.family': '👨‍👩‍👧 Familia',
+  'auth.register.role.familyDesc': 'Busco servicios de cuidado',
+  'auth.register.role.caregiver': '🤝 Cuidador(a)',
+  'auth.register.role.caregiverDesc': 'Ofrezco servicios de cuidado',
+  'auth.register.submit': 'Crear cuenta',
+  'auth.register.submitting': 'Creando cuenta…',
+  'auth.register.terms': 'Al continuar, aceptas nuestros Términos de Servicio y la Política de Privacidad',
+
+  'auth.onboarding.title': '¡Ya casi!',
+  'auth.onboarding.sub': 'Crea tu cuenta para ver tus opciones',
+  'auth.google': 'Continuar con Google',
+  'auth.or': 'o',
+
+  'auth.field.firstName': 'Nombre',
+  'auth.field.lastName': 'Apellido',
+  'auth.field.email': 'Correo electrónico',
+  'auth.field.password': 'Contraseña',
+  'auth.field.passwordHint': 'Mínimo 8 caracteres',
+
+  'auth.complete.title': 'Una última cosa',
+  'auth.complete.sub': 'Confirma cómo aparece tu nombre',
+  'auth.complete.checking': 'Verificando tu cuenta…',
+  'auth.complete.submit': 'Continuar',
+  'auth.complete.submitting': 'Guardando…',
+
+  'auth.err.nameBoth': 'Ingresa tu nombre y tu apellido.',
+  'auth.err.nameLatin': 'Usa el alfabeto latino: letras, apóstrofos y guiones.',
+  'auth.err.saveFailed': 'No pudimos terminar de crear tu cuenta. Inténtalo de nuevo.',
+  'auth.err.oauth': 'No se completó el inicio de sesión. Inténtalo de nuevo.',
+
 }
 
 export const DICT: Record<Locale, Record<MessageKey, string>> = { en, zh, es }
