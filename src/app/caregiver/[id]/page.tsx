@@ -47,29 +47,25 @@ export default function CaregiverPublicProfile() {
         setIsOwnProfile(authUser.id === userId)
       }
 
-      // Get profile user. This page is PUBLIC — logged-out visitors reach it —
-      // so the column list is explicit and stays inside what `anon` is granted.
-      // `select('*')` here used to ship the caregiver's email and phone to
-      // every visitor's browser, rendered or not.
-      const { data: userData } = await supabase
-        .from('users')
-        .select('id, full_name, avatar_url, city, state, is_banned, is_shadow_banned')
-        .eq('id', userId).single()
+      // ONE query answers both "does this page exist" and "who is it".
+      //
+      // There used to be a separate read of `users` here for the name and the
+      // ban flags. It cannot stay: this page is reachable logged out, and
+      // 20260913000100 withholds full_name from anon and authenticated alike.
+      // caregiver_public already excludes banned and shadow-banned caregivers
+      // in its WHERE clause, so "no row" IS the 404 — and its nested `users`
+      // object carries the display identity, abbreviated in Postgres.
+      const { data: profileData } = await supabase
+        .from('caregiver_public')
+        .select('id, user_id, bio, years_experience, languages, services, hourly_rate_min, hourly_rate_max, is_verified, rating, review_count, availability_type, overnight_ok, users')
+        .eq('user_id', userId).single()
 
-      if (!userData || userData.is_banned || userData.is_shadow_banned) {
+      if (!profileData) {
         router.push('/not-found')
         return
       }
 
-      // caregiver_public: the base table is own-row + match participants now,
-      // and this page is reachable logged-out. The view carries no identity
-      // documents and no internal ops columns.
-      const { data: profileData } = await supabase
-        .from('caregiver_public')
-        .select('id, user_id, bio, years_experience, languages, services, hourly_rate_min, hourly_rate_max, is_verified, rating, review_count, availability_type, overnight_ok')
-        .eq('user_id', userId).single()
-
-      setProfileUser(userData)
+      setProfileUser(profileData.users)
       setProfile(profileData)
       setLoading(false)
     }
@@ -115,17 +111,17 @@ export default function CaregiverPublicProfile() {
           <div className="flex items-start gap-4 mb-4">
             <div className="flex-shrink-0">
               {profileUser.avatar_url ? (
-                <img src={profileUser.avatar_url} alt={profileUser.full_name}
+                <img src={profileUser.avatar_url} alt={profileUser.display_name}
                   className="w-20 h-20 rounded-full object-cover" />
               ) : (
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-3xl font-bold text-white">
-                  {profileUser.full_name?.[0]?.toUpperCase() || '?'}
+                  {profileUser.display_name?.[0]?.toUpperCase() || '?'}
                 </div>
               )}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-2">
-                <h1 className="text-xl font-bold text-gray-900">{profileUser.full_name}</h1>
+                <h1 className="text-xl font-bold text-gray-900">{profileUser.display_name}</h1>
                 {profile.is_verified && (
                   <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-medium">✓ Verified</span>
                 )}
@@ -175,7 +171,7 @@ export default function CaregiverPublicProfile() {
               )}
               {viewerRole === 'family' && (
                 <button
-                  onClick={() => router.push(`/family/chat?caregiver=${profileUser.id}&name=${encodeURIComponent(profileUser.full_name || 'this caregiver')}`)}
+                  onClick={() => router.push(`/family/chat?caregiver=${profileUser.id}&name=${encodeURIComponent(profileUser.display_name || 'this caregiver')}`)}
                   className="flex-1 py-3 rounded-xl text-sm font-medium border-2 border-[#7FB3FF] text-[#7FB3FF] hover:bg-blue-50 transition">
                   ✨ Ask Ruah About This Caregiver
                 </button>
@@ -270,7 +266,7 @@ export default function CaregiverPublicProfile() {
             onClick={() => router.push(`/messages/${profileUser.id}`)}
             className="w-full py-4 rounded-2xl text-white font-semibold text-sm transition"
             style={{ background: 'linear-gradient(135deg, #7FB3FF 0%, #A78BFA 100%)' }}>
-            💬 Message {profileUser.full_name?.split(' ')[0]}
+            💬 Message {profileUser.display_name?.split(' ')[0]}
           </button>
         )}
       </div>

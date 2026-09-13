@@ -362,14 +362,14 @@ export default function SearchPage() {
                     {u?.avatar_url
                       ? <img src={u.avatar_url} className="w-14 h-14 rounded-full object-cover flex-shrink-0" alt="" />
                       : <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
-                          {u?.full_name?.[0]?.toUpperCase() || '?'}
+                          {u?.display_name?.[0]?.toUpperCase() || '?'}
                         </div>
                     }
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-gray-900">{u?.full_name || 'Caregiver'}</span>
+                          <span className="font-semibold text-gray-900">{u?.display_name || 'Caregiver'}</span>
                           {c.is_verified && (
                             <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-medium">✓ Verified</span>
                           )}

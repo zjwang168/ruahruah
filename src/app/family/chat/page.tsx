@@ -16,7 +16,9 @@ type CaregiverCard = {
   hourly_rate_max: number | null
   is_verified: boolean
   users: {
-    full_name: string
+    // caregiver_public serves an abbreviated name — "Sarah C." — computed by
+    // public.display_name(). The surname never leaves Postgres.
+    display_name: string
     avatar_url: string | null
     city: string | null
   }
@@ -145,7 +147,7 @@ export default function ChatPage() {
       if (data.success) {
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: `✅ I've reached out to **${cg.users?.full_name || 'this caregiver'}** on your behalf!\n\nHere's the message I sent:\n\n*"${data.message}"*\n\nI'll let you know when they respond! 🐻`
+          content: `✅ I've reached out to **${cg.users?.display_name || 'this caregiver'}** on your behalf!\n\nHere's the message I sent:\n\n*"${data.message}"*\n\nI'll let you know when they respond! 🐻`
         }])
       } else {
         // Most often the contact guardrails spacing things out (429).
@@ -275,16 +277,16 @@ export default function ChatPage() {
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0">
                           {cg.users?.avatar_url ? (
-                            <img src={cg.users.avatar_url} alt={cg.users.full_name} className="w-12 h-12 rounded-full object-cover" />
+                            <img src={cg.users.avatar_url} alt={cg.users.display_name} className="w-12 h-12 rounded-full object-cover" />
                           ) : (
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#EAF4FF] to-[#FFF6F2] flex items-center justify-center text-lg font-bold text-[#7FB3FF]">
-                              {cg.users?.full_name?.[0] || '?'}
+                              {cg.users?.display_name?.[0] || '?'}
                             </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-gray-900 text-sm">{cg.users?.full_name || 'Caregiver'}</span>
+                            <span className="font-semibold text-gray-900 text-sm">{cg.users?.display_name || 'Caregiver'}</span>
                             {cg.is_verified && (
                               <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">✓ Verified</span>
                             )}

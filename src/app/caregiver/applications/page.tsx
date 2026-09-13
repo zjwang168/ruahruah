@@ -47,9 +47,12 @@ export default function CaregiverApplicationsPage() {
 
         let familyUsersMap: Record<string, any> = {}
         if (familyUserIds.length > 0) {
+          // family_public, not `users`: full_name is no longer granted to
+          // `authenticated`, and the view serves the abbreviation the card
+          // renders anyway. Keyed by user_id — the view carries both ids.
           const { data: familyUsersData } = await supabase
-            .from('users').select('id, full_name, avatar_url').in('id', familyUserIds)
-          familyUsersData?.forEach((u: any) => { familyUsersMap[u.id] = u })
+            .from('family_public').select('user_id, display_name, avatar_url').in('user_id', familyUserIds)
+          familyUsersData?.forEach((u: any) => { familyUsersMap[u.user_id] = u })
         }
 
         appsData = (rawApps || []).map((a: any) => ({
@@ -138,10 +141,8 @@ export default function CaregiverApplicationsPage() {
               const familyUser = app.familyUser
               const familyUserId = req?.family_profiles?.user_id
               const status = displayStatus(app)
-              const nameParts = (familyUser?.full_name || '').split(' ').filter(Boolean)
-              const displayName = nameParts.length > 1
-                ? `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}.`
-                : nameParts[0] || 'A Family'
+              // Abbreviated by public.display_name() before it left Postgres.
+              const displayName = familyUser?.display_name || 'A Family'
 
               return (
                 <div key={app.id} className={`bg-white rounded-2xl border p-4 ${
@@ -153,7 +154,7 @@ export default function CaregiverApplicationsPage() {
                     {familyUser?.avatar_url
                       ? <img src={familyUser.avatar_url} className="w-11 h-11 rounded-full object-cover flex-shrink-0" alt="" />
                       : <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0">
-                          {nameParts[0]?.[0]?.toUpperCase() || '?'}
+                          {familyUser?.display_name?.[0]?.toUpperCase() || '?'}
                         </div>
                     }
                     <div className="flex-1 min-w-0">

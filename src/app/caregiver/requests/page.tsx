@@ -53,6 +53,11 @@ export default function CaregiverRequestsPage() {
 
       const { data: userData } = await supabase
         .from('user_self').select('*').single()
+      // Own abbreviated name. user_self carries the caller's WHOLE row, but
+      // anything this page SENDS to a household has to be what the household
+      // is allowed to see — one definition, in public.display_name().
+      const { data: meDisplay } = await supabase
+        .from('user_display').select('display_name').eq('id', authUser.id).single()
       const { data: caregiverData } = await supabase
         .from('caregiver_profiles').select('*').eq('user_id', authUser.id).single()
 
@@ -63,10 +68,10 @@ export default function CaregiverRequestsPage() {
       // without exposing whose matches they are.
       const { data: requestsData } = await supabase
         .from('service_requests')
-        .select(`
-          *,
-          family_profiles ( id, onboarding_answers, user_id )
-        `)
+        // No family_profiles embed. 20260913000100 deletes the pre-match
+        // arm, so an unmatched caregiver has no row on that table at all —
+        // and the embed pulled onboarding_answers, which nothing here reads.
+        .select('*')
         .eq('status', 'open')
         .neq('service_type', 'manual')
         .order('created_at', { ascending: false })
@@ -77,24 +82,25 @@ export default function CaregiverRequestsPage() {
       const matchCounts: Record<string, number> = {}
       statsData?.forEach((s: any) => { matchCounts[s.request_id] = Number(s.match_count) || 0 })
 
-      const familyUserIds = [...new Set(
-        (requestsData || [])
-          .map((r: any) => r.family_profiles?.user_id)
-          .filter(Boolean)
+      // Everything this board may know about a household, in one query: an
+      // abbreviated name, an avatar, a city. No surname, no zipcode, no
+      // intake answers. Keyed by service_requests.family_id = family_public.id.
+      const familyIds = [...new Set(
+        (requestsData || []).map((r: any) => r.family_id).filter(Boolean)
       )]
 
-      let familyUsersMap: Record<string, any> = {}
-      if (familyUserIds.length > 0) {
-        const { data: familyUsersData } = await supabase
-          .from('users')
-          .select('id, full_name, avatar_url, city, state')
-          .in('id', familyUserIds)
-        familyUsersData?.forEach((u: any) => { familyUsersMap[u.id] = u })
+      let familyMap: Record<string, any> = {}
+      if (familyIds.length > 0) {
+        const { data: familyRows } = await supabase
+          .from('family_public')
+          .select('id, user_id, display_name, avatar_url, city, state')
+          .in('id', familyIds)
+        familyRows?.forEach((f: any) => { familyMap[f.id] = f })
       }
 
       const enrichedRequests = (requestsData || []).map((r: any) => ({
         ...r,
-        familyUser: familyUsersMap[r.family_profiles?.user_id] || null,
+        familyUser: familyMap[r.family_id] || null,
         matchCount: matchCounts[r.id] || 0
       }))
 
@@ -106,7 +112,7 @@ export default function CaregiverRequestsPage() {
         matchData?.forEach((m: any) => myApps.add(m.request_id))
       }
 
-      setUser(userData)
+      setUser({ ...userData, display_name: meDisplay?.display_name ?? null })
       setProfile(caregiverData)
       setRequests(enrichedRequests)
       setMyApplications(myApps)
@@ -160,17 +166,18 @@ export default function CaregiverRequestsPage() {
     })
 
     if (!error) {
-      const familyUserId = applyingTo.familyUser?.id
+      // family_public.user_id — the messaging keyspace, not the profile id.
+      const familyUserId = applyingTo.familyUser?.user_id
       if (familyUserId) {
         // Unified notification type so the family side can wrap it in Ruah narration
         await notifyUser({
           recipientUserId: familyUserId,
           type: 'new_match',
-          title: `${user?.full_name} is interested in your request! 🎯`,
+          title: `${user?.display_name} is interested in your request! 🎯`,
           body: introMessage,
           data: {
             caregiverUserId: user?.id,
-            caregiverName: user?.full_name,
+            caregiverName: user?.display_name,
             requestId: applyingTo.id,
             initiatedBy: 'caregiver',
           }
@@ -298,10 +305,8 @@ export default function CaregiverRequestsPage() {
               const isExpanded = expandedId === r.id
               const distance = requestDistances[r.id]
 
-              const nameParts = (familyUser?.full_name || '').split(' ').filter(Boolean)
-              const displayName = nameParts.length > 1
-                ? `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}.`
-                : nameParts[0] || null
+              // Abbreviated by public.display_name() before it left Postgres.
+              const displayName = familyUser?.display_name || null
 
               return (
                 <div key={r.id} className="bg-white rounded-2xl border border-gray-100 hover:border-gray-200 transition overflow-hidden">
@@ -312,7 +317,7 @@ export default function CaregiverRequestsPage() {
                           className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
-                          {nameParts[0]?.[0]?.toUpperCase() || '?'}
+                          {displayName?.[0]?.toUpperCase() || '?'}
                         </div>
                       )}
 
@@ -434,7 +439,7 @@ export default function CaregiverRequestsPage() {
                   className="w-10 h-10 rounded-full object-cover flex-shrink-0" alt="" />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
-                  {applyingTo.familyUser?.full_name?.split(' ')?.[0]?.[0]?.toUpperCase() || '?'}
+                  {applyingTo.familyUser?.display_name?.[0]?.toUpperCase() || '?'}
                 </div>
               )}
               <div>
@@ -443,8 +448,7 @@ export default function CaregiverRequestsPage() {
                 </h3>
                 <p className="text-xs text-gray-400">
                   {(() => {
-                    const parts = (applyingTo.familyUser?.full_name || '').split(' ').filter(Boolean)
-                    const name = parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0] || 'Family'
+                    const name = applyingTo.familyUser?.display_name || 'Family'
                     return `${name}${(applyingTo.pay_min || applyingTo.pay_max) ? ` · $${applyingTo.pay_min}${applyingTo.pay_max ? `–$${applyingTo.pay_max}` : '+'}/hr` : ''}`
                   })()}
                 </p>
