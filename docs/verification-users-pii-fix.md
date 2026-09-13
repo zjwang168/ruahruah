@@ -1,167 +1,123 @@
-# Verifying the `users` PII column fix
+# The `users` PII column fix — completion record
 
-Everything the fix in `bf2add6` needs before it can be called done. Written
-down because none of it has run yet: the Ruah Supabase project was not
-reachable at the time, so the change is **built and pushed but unapplied and
-unverified against real data**.
+**Status: applied and verified, 2026-09-13.** The fix in `bf2add6` closed a
+column-grant gap on `public.users`. This file was written before any of it had
+run, as the runbook; it is now the record of what was run and what came back.
 
-Nothing here is optional. Work top to bottom.
+## Outcome
 
----
-
-## What is already verified, and how
-
-These hold without a database and are green today:
-
-| Check | Command | Result |
-|---|---|---|
-| Types | `npx tsc --noEmit` | 0 errors |
-| Build | `npx next build` | compiles, `/api/request-distances` emitted |
-| Unit tests | `npm test` | 62/62 |
-
-The vulnerability analysis itself also stands without a database — it was
-derived by reading `20260804020000_rls_consolidated.sql` §4b (the column
-whitelist names `anon` only), `can_view_user()` (unconditional arm for every
-caregiver row), and the two self-serve `supabase.auth.signUp` call sites.
-
----
-
-## What is NOT verified
-
-Everything below needs a live Ruah database — one with `users`, real accounts,
-and at least one family/caregiver pair sharing a match.
-
-- The two migrations have never been executed.
-- `npm run rls:check` has never run, so PHASE 5 has never passed.
-- Whether PostgREST embeds through `users_admin` is still **open**. Six admin
-  pages depend on it. See step 5.
-
----
-
-## Step 0 — point `.env.local` at ONE project
-
-Every value must come from the same Supabase project. A URL from one project
-and a key from another returns `Invalid API key`, which reads like a typo and
-is not.
-
-```bash
-awk -F= '{print $1" length "length($2)}' .env.local
-```
-
-`NEXT_PUBLIC_SUPABASE_URL` ~40 chars, both keys 40+ (`sb_publishable_` /
-`sb_secret_`) or 200+ (legacy `eyJ…`). Any zero-length value means the
-placeholder was never replaced.
-
-Confirm it is the Ruah project, not an empty one:
-
-```sql
-SELECT table_name FROM information_schema.tables
-WHERE table_schema = 'public' ORDER BY 1;
-```
-
-Must list `users`, `matches`, `messages`, `caregiver_profiles`,
-`family_profiles`, `service_requests`, `notifications`, `agent_decisions`.
-If it does not, stop — this is the wrong project.
-
----
-
-## Step 1 — run the additive migration
-
-`supabase/migrations/20260805000000_user_views.sql`, whole file, SQL Editor.
-
-Purely additive. Old code and new code both work after it, which is why it is
-separate from step 3.
-
-| Verification block | Expect |
+| | |
 |---|---|
-| A | `user_self` and `users_admin`, grantee `authenticated` |
-| B | `reloptions` NULL or containing `security_invoker=false` |
-| C | **one row** — `authenticated` still holds table-level SELECT on `users` |
+| Applied | 2026-09-13 |
+| `npm run rls:check` | **57 passed, 0 failed** |
+| PHASE 5 (the new half) | 16/16 pass |
+| PostgREST embeds through `users_admin` | **work** — both assertions pass |
+| `authenticated` grant on `users` | 9 of 13 columns |
+| Withheld | `email`, `phone`, `zipcode`, `ban_reason` |
+| Types / tests / build | `tsc` 0 errors · `npm test` 72/72 · `next build` clean |
 
-C being empty means step 3 already ran. Do not continue.
+The four withheld columns are granted to no client role, and no table-level
+SELECT survives on `users` for `anon` or `authenticated` — a table-level grant
+would re-admit every column and silently undo the whole change.
 
----
+## What was wrong
 
-## Step 2 — click through the app
+`20260804020000_rls_consolidated.sql` §4b reset column access and handed back a
+whitelist, but the REVOKE/GRANT pair named `anon` only. `authenticated` kept the
+blanket `GRANT ... ON ALL TABLES IN SCHEMA public` that Supabase installs by
+default, so the stated intent was enforced against logged-out visitors and
+nobody else.
 
-`npm run dev`, then check each of these. All were touched by the commit.
+Row access made that reachable rather than theoretical. `public.can_view_user()`
+carries an unconditional arm — any caregiver's row is visible, no relationship
+required, because the public profile page is public by design. Combined with
+self-serve signup, any account anyone could mint read every caregiver's row,
+and with no column gate that included contact details:
 
-- `/family/dashboard`, `/caregiver/dashboard` — own-row reads now come from
-  `user_self`. Name and avatar render → correct.
-- `/caregiver/requests` — the **"N mi away"** chip. It now comes from
-  `/api/request-distances`; the browser no longer sees any family's zipcode.
-- `/admin/caregivers`, `/admin/families` — the embed-dependent pages. Rows
-  listed with email visible → the embed works.
-- Ban a test account and load any page — must redirect to `/banned` **and show
-  the reason**. `src/proxy.ts` reads `ban_reason` through `user_self`; if that
-  read fails, `userData` is null and the redirect stops firing silently. This
-  is the single most important click in this list.
-
----
-
-## Step 3 — run the revoking migration
-
-`supabase/migrations/20260805000100_users_column_grants.sql`.
-
-Refuses to run if step 1 has not been applied.
-
-| Verification block | Expect |
-|---|---|
-| A | **zero rows** — no client role holds email/phone/zipcode/ban_reason |
-| B | a healthy column list: id, full_name, avatar_url, city, state, role, … |
-| C | **zero rows** — no table-level SELECT survives |
-
-`information_schema` filters by the current role and can under-report. If a
-result looks impossible, re-check against the catalogs, which do not filter:
-
-```sql
-SELECT has_column_privilege('authenticated','public.users','email','SELECT')     AS auth_email,
-       has_column_privilege('authenticated','public.users','full_name','SELECT') AS auth_name;
+```js
+await supabase.from('users').select('full_name, email, phone, zipcode')
 ```
 
-After step 3: `auth_email` false, `auth_name` true.
+For a childcare marketplace that is the caregiver side's phone number and home
+zipcode handed to any signup — a physical-safety exposure, not only a privacy
+one. The row arm is correct and was left alone. The defect was that "which
+rows" was doing a job only "which columns" can do.
 
----
+## What was run, in order
 
-## Step 4 — regression suite
+The two migrations were deliberately split so that no deploy window existed
+where one half was live without the other.
 
-```bash
-npm run rls:check
+**1 — `supabase/migrations/20260805000000_user_views.sql`** (additive)
+
+Created `user_self` (the caller's own row, gated by `id = auth.uid()`) and
+`users_admin` (every row, gated by `is_ruah_admin()`). Both
+`security_invoker = false`, so the WHERE clause is the gate. Nothing was
+revoked; old and new code both worked from this point on.
+
+**2 — deploy**
+
+The application commit moved own-row reads to `user_self` (about twenty pages
+plus `src/proxy.ts`) and admin reads to `users_admin` (six pages). It also
+added `/api/request-distances`, because `/caregiver/requests` had been pulling
+every family's `zipcode` into the browser to render a "12 mi away" chip.
+
+**3 — `supabase/migrations/20260805000100_users_column_grants.sql`** (revoke)
+
+Dropped the table-level SELECT for `authenticated` and re-granted a computed
+column list — everything except the four PII columns. Computed rather than
+hand-listed so that a column added later is granted by default and only the
+named four are withheld. Also installed
+`ALTER DEFAULT PRIVILEGES ... REVOKE SELECT ... FROM authenticated`, which is
+what stops the same gap reopening on the next new table.
+
+**4 — `npm run rls:check`**
+
+57 passed, 0 failed. PHASES 1–4 (pre-existing) stayed green, so the change
+broke no existing row-level rule.
+
+## The question that could not be answered by reading the repo
+
+Six admin pages select users with a nested `caregiver_profiles` or
+`family_profiles` resource. PostgREST resolves embeds on a view through the
+view's source relation — but that is PostgREST behaviour, not something a
+migration can guarantee, and if it stopped working those pages would render
+empty with no error.
+
+**Resolved: it works.** Both assertions pass:
+
+```
+PASS  admin users_admin embeds caregiver_profiles (admin console depends on it)
+PASS  admin users_admin embeds family_profiles (admin console depends on it)
 ```
 
-PHASES 1–4 are pre-existing and should stay green. PHASE 5 is new and covers
-the half that was never asserted — the authenticated path.
+The contingency drafted here — moving those two pages' reads to a server route
+behind `requireAdmin()` — was therefore not needed. If a future PostgREST
+upgrade breaks it, that is still the fix, and
+`supabase/checks/postgrest_view_embed_probe.sql` reproduces the shape on
+throwaway tables in any empty project.
 
-The two lines that matter most:
+## What binds new work from now on
 
-```
-admin users_admin embeds caregiver_profiles (admin console depends on it)
-admin users_admin embeds family_profiles (admin console depends on it)
-```
+- `select('*')` on `users` from the browser **fails** — Postgres expands `*`
+  before checking privileges. Own-row reads go through `user_self`, admin reads
+  through `users_admin`. `.update()` still targets the base table.
+- A **new table is unreadable from the browser** until it ships its own explicit
+  GRANT alongside its policies, and it reads as **empty rather than as an
+  error** — the confusing failure mode. Budget for it on anything new.
+- Never put another user's PII in a client query so the UI can compute
+  something from it. `/api/request-distances` is the pattern: both zipcodes are
+  resolved server-side with the service role and only whole miles come back.
 
----
+## Still open — same class, product decision taken
 
-## Step 5 — if the embeds FAIL
+`caregiver_profiles` and `family_profiles` have correct ROW gates and no COLUMN
+gates. Before matching, any caregiver-role account reads a family's entire row,
+including `onboarding_answers`; a matched family reads the caregiver's
+`id_photo_path` and `selfie_path` (paths only — the bucket is private).
 
-`/admin/caregivers` and `/admin/families` will render empty. The fix is to move
-those two pages' user reads to a server route holding the service role behind
-`requireAdmin()` — the `/api/admin/verify-caregiver` pattern. Roughly half an
-hour. The rest of the change is unaffected.
-
-To answer this question without a Ruah database at all, run
-`supabase/checks/postgrest_view_embed_probe.sql` in any empty project. It
-reproduces the same shape on throwaway tables.
-
----
-
-## Still open after all of this
-
-Same class of defect, deliberately not fixed in `bf2add6`:
-
-- **`caregiver_profiles`** — correct row gate, no column gate. A matched family
-  reads `id_photo_path` and `selfie_path`. Paths only; confirm the storage
-  bucket is private.
-- **`family_profiles`** — any caregiver-role account reads the entire row of
-  any family with an open request, including `onboarding_answers` (children's
-  ages, schedule, budget). Needs a product decision about what a caregiver
-  should see before matching, which is why it is not a pure security patch.
+Unlike the `users` gap this was never a pure security patch: it needed a
+product answer about what each side should see before a match. That answer has
+now been given, and the work is specified separately. The same shape applies —
+views plus a computed column grant, split into an additive migration and a
+revoking one, with `rls:check` assertions on both halves.
