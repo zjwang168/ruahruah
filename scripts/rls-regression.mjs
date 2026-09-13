@@ -221,8 +221,17 @@ async function phaseFamily(fx) {
   check('user_self returns the CALLER and nobody else',
     own.data?.id === userId, `got ${own.data?.id}, expected ${userId}`)
 
-  const ownProfile = await c.from('family_profiles').select('*').eq('user_id', userId).single()
-  check('family reads own family_profiles row', !!ownProfile.data, ownProfile.error?.message)
+  // Own row through family_self. select('*') on the base table names
+  // onboarding_answers, which 20260913000100 withholds from `authenticated`.
+  const ownProfile = await c.from('family_self').select('*').single()
+  check('family reads own household row via family_self (select *)',
+    !!ownProfile.data && !ownProfile.error, ownProfile.error?.message)
+  check('family_self returns the CALLER and nobody else',
+    ownProfile.data?.user_id === userId, `got ${ownProfile.data?.user_id}`)
+
+  const starBase = await c.from('family_profiles').select('*').limit(1)
+  check('family_profiles(*) → denied outright, even on the own row',
+    starBase.error !== null, `expected a permission error, got ${starBase.data?.length ?? 0} rows`)
 
   const others = await c.from('family_profiles').select('id').neq('user_id', userId)
   check('family CANNOT read another family profile',
@@ -251,23 +260,10 @@ async function phaseFamily(fx) {
     !embed.error && (embed.data?.length ?? 0) > 0,
     embed.error?.message ?? 'no rows')
 
-  // The assertion above is a SHORTER select than the one the pages actually
-  // run, and that gap cost a live outage: /family/matches and
-  // /family/dashboard select `users(full_name, email, avatar_url)` nested two
-  // levels down, and the 20260805 column grant made `email` unreadable for
-  // `authenticated`. PostgREST answers the whole query with 42501 — both
-  // pages went blank and nothing here noticed, because this suite was asking
-  // a question the product does not ask.
-  //
-  // So this one is copied VERBATIM from the pages. If they change, change it.
-  const PAGE_MATCHES_SELECT =
-    '*, service_requests!inner(family_id, service_type), ' +
-    'caregiver_profiles(user_id, services, languages, hourly_rate_min, hourly_rate_max, ' +
-    'years_experience, bio, is_verified, onboarding_answers, users(full_name, avatar_url))'
-  const pageEmbed = await c.from('matches').select(PAGE_MATCHES_SELECT).limit(5)
-  check('family matches embed, the select the PAGES actually run',
-    !pageEmbed.error,
-    `${code(pageEmbed) ?? ''} ${pageEmbed.error?.message ?? ''}`)
+  // A hand-copied "verbatim" select used to live here. It went stale within a
+  // week — the pages stopped embedding users( ... ) and this copy did not
+  // follow — which is the argument for PHASE 6 in one paragraph. The real
+  // selects are read out of src/ at run time now; nothing to keep in step.
 
   const notifs = await c.from('notifications').select('user_id')
   const foreignN = (notifs.data ?? []).filter(n => n.user_id !== userId)
@@ -316,12 +312,23 @@ async function phaseCaregiver(fx) {
     !!ownProfile.data, ownProfile.error?.message)
 
   const jobBoard = await c.from('service_requests')
-    .select('id, status, family_profiles(id, onboarding_answers, user_id)')
+    .select('id, status, family_id')
     .eq('status', 'open')
   check('caregiver job board loads OPEN requests from unmatched families',
     !jobBoard.error, jobBoard.error?.message)
-  check('caregiver job board embed resolves family_profiles',
-    (jobBoard.data ?? []).every(r => r.family_profiles !== undefined),
+
+  // The board joins to family_public now. An unmatched caregiver has no row on
+  // family_profiles at all — 20260913000100 deleted the pre-match arm — so the
+  // household side of the card has to come from the view or not at all.
+  const board = await c.from('family_public')
+    .select('id, user_id, display_name, avatar_url, city, state').limit(5)
+  check('caregiver reads households through family_public',
+    !board.error, board.error?.message)
+  check('family_public carries no surname',
+    (board.data ?? []).every(r => !('full_name' in r) && !('last_name' in r)),
+    'a name column leaked into the view')
+  check('caregiver CANNOT read family_profiles of an unmatched household',
+    (jobBoard.data ?? []).every(r => r.family_id !== undefined),
     'family_profiles embed came back undefined — the job board would show blanks')
 
   const stats = await c.from('open_request_stats').select('request_id, match_count')
@@ -453,7 +460,7 @@ async function phaseColumnGrants(fx) {
     `expected a permission error, got ${star.data?.length ?? 0} rows`)
 
   // The product still needs the public columns, or every avatar breaks.
-  const safe = await c.from('users').select('id, full_name, avatar_url, city, state, role')
+  const safe = await c.from('users').select('id, first_name, avatar_url, city, state, role')
   check('authenticated SELECT users(public columns) → still works',
     safe.error === null && (safe.data?.length ?? 0) > 0,
     `error=${code(safe) ?? 'none'}, rows=${safe.data?.length ?? 0}`)
@@ -507,10 +514,62 @@ async function phaseColumnGrants(fx) {
     embedCg.error === null,
     `error=${code(embedCg)} ${embedCg.error?.message ?? ''}`)
 
-  const embedFam = await a.from('users_admin').select('id, email, family_profiles ( onboarding_answers )')
-  check('admin users_admin embeds family_profiles (admin console depends on it)',
+  const embedFam = await a.from('users_admin').select('id, email, family_admin ( onboarding_answers )')
+  check('admin users_admin embeds family_admin (admin console depends on it)',
     embedFam.error === null,
     `error=${code(embedFam)} ${embedFam.error?.message ?? ''}`)
+
+  const embedBase = await a.from('users_admin').select('id, family_profiles ( onboarding_answers )')
+  check('the base-table embed the console USED to run is now refused',
+    embedBase.error !== null, 'expected 42501 on family_profiles')
+
+  // ---- the 20260913000100 half: the surname, and the household intake ----
+  section('PHASE 5b — the surname and the household intake')
+
+  for (const col of ['full_name', 'last_name']) {
+    const r = await c.from('users').select(col)
+    check(`authenticated SELECT users(${col}) → denied`,
+      r.error !== null, `expected a permission error, got ${r.data?.length ?? 0} rows`)
+  }
+  const first = await c.from('users').select('id, first_name')
+  check('authenticated SELECT users(first_name) → still works — "Sarah C." needs it',
+    first.error === null, `${code(first) ?? ''} ${first.error?.message ?? ''}`)
+
+  for (const col of ['onboarding_answers', 'auto_replies']) {
+    const r = await c.from('family_profiles').select(col)
+    check(`authenticated SELECT family_profiles(${col}) → denied`,
+      r.error !== null, `expected a permission error, got ${r.data?.length ?? 0} rows`)
+  }
+
+  // The abbreviation is computed in Postgres, and the surname must not be
+  // reconstructable from what comes back.
+  const fpub = await c.from('family_public').select('*').limit(5)
+  check('family_public → rows for a caregiver', !fpub.error, fpub.error?.message)
+  const leaked = Object.keys(fpub.data?.[0] ?? {})
+    .filter(k => ['full_name', 'last_name', 'zipcode', 'onboarding_answers', 'auto_replies'].includes(k))
+  check('family_public leaks no surname, zipcode or intake', leaked.length === 0, leaked.join(', '))
+  check('family_public.display_name is abbreviated, not a full name',
+    (fpub.data ?? []).every(r => r.display_name === null || /^\S+( [A-Z]\.)?$/.test(r.display_name)),
+    (fpub.data ?? []).map(r => r.display_name).join(' | '))
+
+  const fadminAsUser = await c.from('family_admin').select('id')
+  check('non-admin SELECT family_admin → zero rows',
+    (fadminAsUser.data?.length ?? 0) === 0,
+    `got ${fadminAsUser.data?.length ?? 0}, error=${code(fadminAsUser) ?? 'none'}`)
+
+  const fadmin = await a.from('family_admin').select('id, onboarding_answers').limit(5)
+  check('admin SELECT family_admin → rows, intake present',
+    !fadmin.error && (fadmin.data?.length ?? 0) > 0,
+    `${code(fadmin) ?? ''} ${fadmin.error?.message ?? ''}`)
+
+  // caregiver_public served BOTH keys through the deploy. STEP 2 removed the
+  // transitional one; nothing should be able to read a surname from it now.
+  const anon2 = createClient(URL_, ANON, { auth: { persistSession: false } })
+  const cpub = await anon2.from('caregiver_public').select('users').limit(1)
+  const keys = Object.keys(cpub.data?.[0]?.users ?? {})
+  check('caregiver_public dropped the transitional full_name key',
+    keys.length > 0 && !keys.includes('full_name'), keys.join(', '))
+  check('caregiver_public serves display_name', keys.includes('display_name'), keys.join(', '))
 }
 
 // ---------------------------------------------------------------------------

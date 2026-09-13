@@ -71,10 +71,13 @@ function rolesFor(file) {
 // Keep in step with the denylists in supabase/migrations/*_grants.sql. When a
 // migration has run, its columns can come off this list: the live phase covers
 // them from then on.
-export const PENDING_DENYLIST = {
-  users: ['full_name', 'last_name'],              // 20260913000100 §2
-  family_profiles: ['onboarding_answers', 'auto_replies'], // 20260913000100 §3
-}
+// Empty on purpose. 20260913000100 was applied on 2026-09-13, so its columns
+// moved out of here and into the live half above: PHASE 6 now runs every
+// browser-side select against a real session and a real grant, which is a
+// stronger check than matching column names in a string.
+//
+// Refill this the next time a *_grants.sql is WRITTEN and not yet run.
+export const PENDING_DENYLIST = {}
 
 /** Browser-side selects that name a column a pending migration will withhold. */
 export function pendingBreakage() {
