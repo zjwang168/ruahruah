@@ -235,7 +235,6 @@ export default function Home() {
             ))}
           </div>
           <p className="text-center mt-8 text-sm text-gray-500">
-            {t('home.trust.noChecks')}{' '}
             <Link href="/trust" className="text-[#4A90D9] font-medium hover:underline">
               {t('home.trust.noChecksLink')}
             </Link>
