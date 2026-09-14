@@ -177,9 +177,14 @@ check it too, or it becomes a spam hole around the agent.
 - 触发点：家庭在"想见"阶段一键购买、家庭付费。Checkr 向 caregiver 发邀请，
   caregiver 自己同意并在 Checkr 页面填 SSN；不同意则不查，家庭看到"对方未同意"。
 - Ruah 只存状态（none / ordered / pending / clear / consider / failed），不存报告。
-  家庭看到结论；consider 时显示"未通过，建议不继续"，细节仅 admin 在 Checkr
-  后台可见。Checkr 完成后 caregiver 可一键把自己的报告分享给下单家庭，
-  不分享则家庭只见状态。同一 caregiver 90 天内有效结果可复用，不重复收费。
+  家庭看到结论；consider 时显示"背景调查有需要留意的记录，caregiver 可选择
+  向你分享完整报告"——不出现"建议不继续"或任何替家庭下的判断。细节仅 admin
+  在 Checkr 后台可见。Checkr 完成后 caregiver 可一键把自己的报告分享给下单
+  家庭，不分享则家庭只见状态。
+- 90 天复用规则分两层：状态（badge）挂 caregiver，任何家庭都免费看得到；
+  报告分享挂 (caregiver, family) 这一对，只对下单的那个家庭可见。A 家庭付费
+  查过之后，B 家庭免费看到 badge，想要报告要么等 caregiver 分享、要么自己
+  再付一次。A 不因为 B 复用而拿到任何回馈。
 - 平台不预筛所有 caregiver。信任信号是 badge：推荐人由 Ruah 核实、
   Ruah 面谈过（admin 手动）、被 N 个家庭雇佣、90 天内背景调查通过。
 - 永远不收集 SSN、证件图片、身份状态（"有身份"之类）。
@@ -190,6 +195,10 @@ check it too, or it becomes a spam hole around the agent.
 - 页脚和条款加免责声明：不雇佣任何 caregiver、除 badge 外的信息未核实、
   背景调查由第三方执行且不保证安全、用户自行尽调并遵守法律。
   trust 页、条款、页脚三处，正式上线前律师过一遍。
+- 律师清单单列一条：consider 状态展示给家庭的那段文案和流程。这不是措辞
+  问题而是流程设计问题——基于 consumer report 对某人做出不利判断并告知
+  第三方，FCRA 对 adverse action 有通知义务（谁收到报告、谁做的决定、
+  被调查人有权索取副本并申诉）。要问清楚谁是 report 的 "user"、义务在谁。
 
 ### 账号与姓名
 - 一人一账号，可同时有 family 和 caregiver 两个 profile，界面切换。
@@ -223,6 +232,10 @@ check it too, or it becomes a spam hole around the agent.
   看候选人全免费），Premium 只解锁交换联系方式和购买背景调查。
 - 付费点：家庭想拿联系方式时弹开会员。认识的家庭用 100% 折扣邀请码，
   陌生家庭付费，从第一天起就这样。
+- 免费档有额度，因为最贵的一步（Ruah 外联）就在免费档里，而 Care.com 敢
+  大方是因为他们边际成本约等于零，我们不是：同时只能有 1 个 active
+  request，每个 request 最多外联 5 位 caregiver，超出提示开会员。浏览、
+  发需求、看候选人不限。
 - 续费前三天邮件提醒；一键取消不设挽留；条款写死不按比例退款。
 - Stripe Checkout + Billing，开 Stripe Tax 自动处理销售税。
 - 背景调查 $69 单独收（+ MVR 可选），家庭付。
