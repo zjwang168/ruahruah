@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { nameError } from '@/lib/names'
@@ -22,6 +22,24 @@ function RegisterForm() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Already signed in with an account: this is the SECOND side being added,
+  // not a sign-up. The name is on file and there is no password to set, so the
+  // funnel's context is stashed and /auth/complete writes the one missing
+  // profile row. Someone signed in whose users row is missing falls through
+  // to the form below, which /auth/complete would otherwise also handle.
+  useEffect(() => {
+    const check = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: row } = await supabase.from('user_self').select('id').maybeSingle()
+      if (!row) return
+      stashPendingSignup(role, answers)
+      router.replace('/auth/complete')
+    }
+    check()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleRegister = async () => {
     // Before signUp: a failed users insert would strand an auth account with

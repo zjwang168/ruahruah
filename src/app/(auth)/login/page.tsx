@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { capabilitiesOf, pickSide, dashboardFor, readActiveRoleCookie } from '@/lib/roles'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -25,18 +26,15 @@ export default function LoginPage() {
       return
     }
 
-    // 根据角色跳转
+    // Route by what the account CAN do, not by what users.role says. With
+    // both profiles the cookie remembers the side last used on this device;
+    // with none, /auth/complete finishes the account.
     const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', data.user.id)
-      .single()
-
-    if (userData?.role === 'family') {
-      router.push('/family/dashboard')
-    } else {
-      router.push('/caregiver/dashboard')
-    }
+      .from('user_self')
+      .select('family_profile_id, caregiver_profile_id')
+      .maybeSingle()
+    const side = pickSide(capabilitiesOf(userData), readActiveRoleCookie())
+    router.push(side ? dashboardFor(side) : '/auth/complete')
   }
 
   return (

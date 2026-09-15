@@ -53,6 +53,48 @@ function parseRate(raw: unknown): [number | null, number | null] {
 }
 
 /**
+ * Writes ONLY the profile row for one side. Used on its own when an existing
+ * account adds its second side — the users row is already there, and the
+ * onboarding funnel ends here instead of at signUp.
+ */
+export async function createProfileRow(
+  supabase: SupabaseClient,
+  opts: { userId: string; role: SignupRole; answers: Answers }
+): Promise<{ errorKey: 'auth.err.saveFailed' | null }> {
+  const { userId, role, answers } = opts
+  const a = answers as Record<string, any>
+
+  if (role === 'family') {
+    const { error } = await supabase.from('family_profiles').insert({
+      user_id: userId,
+      languages: a.languages || [],
+      onboarding_answers: answers,
+    })
+    if (error) {
+      console.error('signup: family_profiles insert failed —', error.message)
+      return { errorKey: 'auth.err.saveFailed' }
+    }
+    return { errorKey: null }
+  }
+
+  const [rateMin, rateMax] = parseRate(a.rate)
+  const { error } = await supabase.from('caregiver_profiles').insert({
+    user_id: userId,
+    services: a.services || [],
+    languages: a.languages || [],
+    years_experience: Number(a.experience) || 0,
+    hourly_rate_min: rateMin,
+    hourly_rate_max: rateMax,
+    onboarding_answers: answers,
+  })
+  if (error) {
+    console.error('signup: caregiver_profiles insert failed —', error.message)
+    return { errorKey: 'auth.err.saveFailed' }
+  }
+  return { errorKey: null }
+}
+
+/**
  * Writes users + the matching profile row. Returns a MESSAGE KEY on failure,
  * never the database's own words: a CHECK violation on users_latin_name_ck
  * reads as `violates check constraint "users_latin_name_ck"`, which tells a
@@ -89,32 +131,5 @@ export async function createAccountRows(
     return { errorKey: 'auth.err.saveFailed' }
   }
 
-  if (role === 'family') {
-    const { error } = await supabase.from('family_profiles').insert({
-      user_id: userId,
-      languages: a.languages || [],
-      onboarding_answers: answers,
-    })
-    if (error) {
-      console.error('signup: family_profiles insert failed —', error.message)
-      return { errorKey: 'auth.err.saveFailed' }
-    }
-  } else {
-    const [rateMin, rateMax] = parseRate(a.rate)
-    const { error } = await supabase.from('caregiver_profiles').insert({
-      user_id: userId,
-      services: a.services || [],
-      languages: a.languages || [],
-      years_experience: Number(a.experience) || 0,
-      hourly_rate_min: rateMin,
-      hourly_rate_max: rateMax,
-      onboarding_answers: answers,
-    })
-    if (error) {
-      console.error('signup: caregiver_profiles insert failed —', error.message)
-      return { errorKey: 'auth.err.saveFailed' }
-    }
-  }
-
-  return { errorKey: null }
+  return createProfileRow(supabase, { userId, role, answers })
 }

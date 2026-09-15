@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { isAdminEmail } from '@/lib/admin/emails'
+import { ACTIVE_ROLE_COOKIE, ACTIVE_ROLE_MAX_AGE, capabilitiesOf, type Side } from '@/lib/roles'
 import {
   isLocale,
   LOCALE_COOKIE,
@@ -78,7 +79,7 @@ export async function proxy(request: NextRequest) {
     // That leaves `error` meaning exactly one thing: the read itself failed.
     const { data: userData, error: userErr } = await supabase
       .from('user_self')
-      .select('is_banned, ban_reason, role')
+      .select('is_banned, ban_reason, family_profile_id, caregiver_profile_id')
       .maybeSingle()
 
     // A failed read means we do not know whether this account is banned, and
@@ -103,44 +104,59 @@ export async function proxy(request: NextRequest) {
       return supabaseResponse
     }
 
-    const role = userData?.role
     const isAdmin = isAdminEmail(user.email)
 
-    // A caller with no usable role cannot be routed by the three rules below.
-    // The family rule sends them to /caregiver/dashboard, the caregiver rule
-    // sends them straight back, and the browser spins between the two until it
-    // gives up. Two ways in: a users insert that failed after signUp, and —
-    // until /auth/callback existed — every Google sign-in, none of which ever
-    // wrote a row at all.
-    //
-    // /auth/complete is where they belong. It asks for the role and the name,
-    // writes the row and the profile, and sends them on; an account that has
-    // been stuck this way repairs itself on the next sign-in with nobody
-    // editing the database by hand. It is not a gated page, so nothing here
-    // can bounce them again. Admins are exempt — the email allowlist is their
-    // authorisation, not `role`.
-    if (!isAdmin && role !== 'family' && role !== 'caregiver' && isGatedPage) {
+    // What this person CAN do comes from which profiles exist — the two ids
+    // user_self carries since 20260914000000 — never from users.role, which
+    // is now only "which side did they sign up as". One account may hold
+    // both, and on that account neither side is a wrong turn.
+    const caps = capabilitiesOf(userData)
+    const isCaregiverPrivate =
+      segments[0] === 'caregiver' && CAREGIVER_PRIVATE_PAGES.includes(segments[1])
+
+    // No profile at all: a users insert that failed after signUp, or a Google
+    // sign-in from before /auth/callback existed. /auth/complete asks for the
+    // side and the name, writes what is missing and sends them on; the
+    // account repairs itself on the next sign-in with nobody editing the
+    // database. It is not a gated page, so nothing here can bounce them again.
+    // Admins are exempt — the email allowlist is their authorisation.
+    if (!isAdmin && !caps.family && !caps.caregiver && isGatedPage) {
       return NextResponse.redirect(new URL('/auth/complete', request.url))
     }
 
-    // --- Role-based route isolation ---
+    // --- Route isolation, by capability ---
 
     // Admin pages: only admin emails
     if (pathname.startsWith('/admin') && !isAdmin) {
       return NextResponse.redirect(new URL('/', request.url))
     }
 
-    // Family pages: only family role (admins allowed for support)
-    if (pathname.startsWith('/family') && role !== 'family' && !isAdmin) {
-      return NextResponse.redirect(new URL('/caregiver/dashboard', request.url))
+    // /family/* needs a family profile. Someone with only a caregiver profile
+    // goes to their own dashboard rather than bouncing between the two.
+    if (pathname.startsWith('/family') && !caps.family && !isAdmin) {
+      return NextResponse.redirect(
+        new URL(caps.caregiver ? '/caregiver/dashboard' : '/auth/complete', request.url)
+      )
     }
 
-    // Caregiver PRIVATE pages: only caregiver role (admins allowed).
-    // Public caregiver profile pages (/caregiver/{uuid}) are NOT restricted.
-    if (segments[0] === 'caregiver' && CAREGIVER_PRIVATE_PAGES.includes(segments[1])) {
-      if (role !== 'caregiver' && !isAdmin) {
-        return NextResponse.redirect(new URL('/family/dashboard', request.url))
-      }
+    // Caregiver PRIVATE pages need a caregiver profile. Public caregiver
+    // profile pages (/caregiver/{uuid}) are NOT restricted.
+    if (isCaregiverPrivate && !caps.caregiver && !isAdmin) {
+      return NextResponse.redirect(
+        new URL(caps.family ? '/family/dashboard' : '/auth/complete', request.url)
+      )
+    }
+
+    // Remember the side they actually went to. Written here, as a side effect
+    // of the request that landed, so no page has to set it and it can never
+    // disagree with where the person is. Only read by the generic entry
+    // points (/login, /auth/complete, /messages) when they must pick a side.
+    const landedOn: Side | null =
+      pathname.startsWith('/family') ? 'family' : isCaregiverPrivate ? 'caregiver' : null
+    if (landedOn && caps[landedOn] && request.cookies.get(ACTIVE_ROLE_COOKIE)?.value !== landedOn) {
+      supabaseResponse.cookies.set(ACTIVE_ROLE_COOKIE, landedOn, {
+        path: '/', maxAge: ACTIVE_ROLE_MAX_AGE, sameSite: 'lax',
+      })
     }
   }
 

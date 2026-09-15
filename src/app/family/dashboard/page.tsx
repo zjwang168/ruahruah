@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import FamilyNav from '@/components/FamilyNav'
+import { capabilitiesOf } from '@/lib/roles'
 import { INTERNAL_NOTIFICATION_TYPE, isActionNotification } from '@/lib/notifications'
 import { SELECTABLE_SERVICE_IDS } from '@/lib/services'
 
@@ -237,7 +238,7 @@ export default function FamilyDashboard() {
 
   return (
     <div className="min-h-screen bg-[#FAFCFF]">
-      <FamilyNav userName={user?.full_name} unreadCount={unreadCount} />
+      <FamilyNav userName={user?.full_name} unreadCount={unreadCount} caps={capabilitiesOf(user)} />
 
       <div className="max-w-2xl mx-auto px-6 py-8">
         <div className="mb-6">

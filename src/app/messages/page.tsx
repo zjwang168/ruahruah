@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { isRuahMessage, ruahMessageVisibleTo } from '@/lib/messages'
+import { capabilitiesOf, pickSide, dashboardFor, readActiveRoleCookie } from '@/lib/roles'
 
 export default function MessagesPage() {
   const [user, setUser] = useState<any>(null)
@@ -27,14 +28,15 @@ export default function MessagesPage() {
         .select(`
           id, content, created_at, read_at, sender_id, receiver_id, sender_type, is_ai,
           sender:user_display!messages_sender_id_fkey ( id, display_name, avatar_url, role ),
-          receiver:user_display!messages_receiver_id_fkey ( id, display_name, avatar_url, role )
+          receiver:user_display!messages_receiver_id_fkey ( id, display_name, avatar_url, role ),
+          matches ( service_requests ( family_id ) )
         `)
         .or(`sender_id.eq.${authUser.id},receiver_id.eq.${authUser.id}`)
         .order('created_at', { ascending: false })
 
       // Audience filter: Ruah's reports to the other party never appear here,
       // not even as a preview line.
-      const viewer = { id: authUser.id, role: userData?.role }
+      const viewer = { id: authUser.id, familyProfileId: userData?.family_profile_id ?? null }
       const visible = (messages || []).filter(m => ruahMessageVisibleTo(m, viewer))
 
       // Group by conversation partner
@@ -74,7 +76,8 @@ export default function MessagesPage() {
     </div>
   )
 
-  const dashboardPath = user?.role === 'family' ? '/family/dashboard' : '/caregiver/dashboard'
+  const side = pickSide(capabilitiesOf(user), readActiveRoleCookie()) ?? 'family'
+  const dashboardPath = dashboardFor(side)
 
   return (
     <div className="min-h-screen bg-[#FAFCFF]">
@@ -91,7 +94,7 @@ export default function MessagesPage() {
             <div className="text-4xl mb-3">💬</div>
             <p className="text-sm">No messages yet.</p>
             <p className="text-xs mt-1 text-gray-300">
-              {user?.role === 'family'
+              {side === 'family'
                 ? 'Accept a match to start chatting with caregivers.'
                 : 'Apply to a request to start chatting with families.'}
             </p>

@@ -167,6 +167,14 @@ export const en = {
   'common.loading': 'Loading…',
   'common.perHour': '/hr',
 
+  // ── common: the two sides of one account ──
+  'common.role.family': 'Family',
+  'common.role.caregiver': 'Caregiver',
+  'common.role.switch': 'Switch side',
+  'common.role.becomeCaregiver': 'Also offer care',
+  'common.role.becomeFamily': 'Also find care',
+
+
   // ── caregiver: my applications ──
   'cg.apps.title': 'My Applications',
   'cg.apps.total': '{count} total',
@@ -306,6 +314,13 @@ export const zh: Record<MessageKey, string> = {
   'common.back': '返回',
   'common.loading': '加载中……',
   'common.perHour': '/小时',
+
+  'common.role.family': '家庭',
+  'common.role.caregiver': '照护者',
+  'common.role.switch': '切换身份',
+  'common.role.becomeCaregiver': '我也想提供照护',
+  'common.role.becomeFamily': '我也想找照护',
+
 
   'cg.apps.title': '我的申请',
   'cg.apps.total': '共 {count} 条',
@@ -463,6 +478,13 @@ export const es: Record<MessageKey, string> = {
   'common.back': 'Volver',
   'common.loading': 'Cargando…',
   'common.perHour': '/hora',
+
+  'common.role.family': 'Familia',
+  'common.role.caregiver': 'Cuidador(a)',
+  'common.role.switch': 'Cambiar de perfil',
+  'common.role.becomeCaregiver': 'También ofrecer cuidado',
+  'common.role.becomeFamily': 'También buscar cuidado',
+
 
   'cg.apps.title': 'Mis solicitudes',
   'cg.apps.total': '{count} en total',

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import RoleSwitcher, { BecomeOtherSide } from '@/components/RoleSwitcher'
+import { capabilitiesOf } from '@/lib/roles'
 import RequestSummaryCard from '@/components/RequestSummaryCard'
 import { notifyUser } from '@/lib/notifications'
 
@@ -264,6 +266,8 @@ export default function CaregiverDashboard() {
           <span className="text-lg font-bold text-[#7FB3FF]">Ruah!</span>
         </div>
         <div className="flex items-center gap-4">
+          <RoleSwitcher current="caregiver" caps={capabilitiesOf(user)} />
+          <BecomeOtherSide current="caregiver" caps={capabilitiesOf(user)} />
           {unreadCount > 0 && (
             <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{unreadCount} new</span>
           )}

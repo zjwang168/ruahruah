@@ -10,6 +10,7 @@ import { notifyUser } from '@/lib/notifications'
 export default function ChatPage() {
   const [user, setUser] = useState<any>(null)
   const [partner, setPartner] = useState<any>(null)
+  const [partnerSide, setPartnerSide] = useState<'family' | 'caregiver'>('caregiver')
   const [messages, setMessages] = useState<any[]>([])
   // match_id -> { request, childrenAges, city } for structured request cards
   const [requestByMatch, setRequestByMatch] = useState<Record<string, any>>({})
@@ -70,6 +71,14 @@ export default function ChatPage() {
           }
         }
         setRequestByMatch(map)
+
+        // Which side of THIS thread the viewer is on, from the matches rather
+        // than from users.role: one account can be a household on one thread
+        // and the caregiver on another.
+        const mine = (userData as any)?.family_profile_id
+        const onFamilySide = (matchRows || []).some((r: any) =>
+          r.service_requests?.family_id && r.service_requests.family_id === mine)
+        setPartnerSide(onFamilySide ? 'caregiver' : 'family')
       }
 
       // Mark messages as read
@@ -176,11 +185,12 @@ export default function ChatPage() {
     }
   }
 
-  const ruahLabel = (msg: any) => {
-    if (msg.receiver_id === user?.id) return 'Ruah'
-    if (user?.role === 'family') return 'Ruah · sent on your behalf'
-    return `Ruah · on behalf of ${partner?.display_name?.split(' ')[0] || 'the family'}`
-  }
+  // A Ruah message the viewer can see and did not receive is one Ruah sent
+  // on the viewer's behalf: the audience policy admits a sender only when they
+  // are the household on that message's match. No role check is needed — the
+  // database already answered the question by returning the row.
+  const ruahLabel = (msg: any) =>
+    msg.receiver_id === user?.id ? 'Ruah' : 'Ruah · sent on your behalf'
 
   return (
     <div className="min-h-screen bg-[#FAFCFF] flex flex-col">
@@ -194,14 +204,14 @@ export default function ChatPage() {
           {partner?.avatar_url
             ? <img src={partner.avatar_url} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
             : <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 bg-gradient-to-br ${
-                partner?.role === 'family' ? 'from-blue-400 to-purple-500' : 'from-emerald-400 to-teal-500'
+                partnerSide === 'family' ? 'from-blue-400 to-purple-500' : 'from-emerald-400 to-teal-500'
               }`}>
                 {partner?.display_name?.[0]?.toUpperCase() || '?'}
               </div>
           }
           <div className="min-w-0">
             <div className="font-semibold text-gray-900 text-sm truncate">{partner?.display_name}</div>
-            <div className="text-xs text-gray-400 capitalize">{partner?.role}</div>
+            <div className="text-xs text-gray-400 capitalize">{partnerSide}</div>
           </div>
         </div>
 

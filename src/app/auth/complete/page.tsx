@@ -7,11 +7,13 @@ import { useT } from '@/lib/i18n/provider'
 import { nameError } from '@/lib/names'
 import {
   createAccountRows,
+  createProfileRow,
   readPendingSignup,
   clearPendingSignup,
   type SignupRole,
   type Answers,
 } from '@/lib/signup'
+import { capabilitiesOf, pickSide, dashboardFor, readActiveRoleCookie } from '@/lib/roles'
 
 // The page every account passes through once, before it has a `users` row.
 //
@@ -44,6 +46,9 @@ function CompleteForm() {
   const [answers, setAnswers] = useState<Answers>({})
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  // true when a users row already exists and only a profile is missing —
+  // the second side of an account, or a profile insert that once failed.
+  const [hasUserRow, setHasUserRow] = useState(false)
 
   useEffect(() => {
     const run = async () => {
@@ -54,19 +59,42 @@ function CompleteForm() {
 
       // maybeSingle, not single: "no row yet" is the normal case here and is
       // not an error.
-      const { data: row } = await supabase.from('user_self').select('role').maybeSingle()
-      if (row?.role === 'family' || row?.role === 'caregiver') {
-        router.replace(`/${row.role}/dashboard`)
-        return
+      const { data: row } = await supabase
+        .from('user_self')
+        .select('first_name, last_name, family_profile_id, caregiver_profile_id')
+        .maybeSingle()
+      const caps = capabilitiesOf(row)
+      const pending = readPendingSignup()
+
+      // An existing account adding its OTHER side: the funnel stashed the
+      // side and the answers, the name is already on file, so there is no
+      // form to show — write the profile row and go.
+      if (row && pending.role && !caps[pending.role]) {
+        const { errorKey } = await createProfileRow(supabase, {
+          userId: user.id, role: pending.role, answers: pending.answers,
+        })
+        if (!errorKey) {
+          clearPendingSignup()
+          router.replace(dashboardFor(pending.role))
+          return
+        }
+        setError(t(errorKey))
       }
 
-      const pending = readPendingSignup()
+      // Anyone who can already be routed somewhere goes there. With both
+      // profiles, the side is the one the cookie remembers.
+      const side = pickSide(caps, readActiveRoleCookie())
+      if (side) { router.replace(dashboardFor(side)); return }
+
+      setHasUserRow(!!row)
       setRole(pending.role ?? '')
       setAnswers(pending.answers)
 
+      // Prefill: the row if it exists, else what Google told us. Never
+      // written through without the person confirming it.
       const meta = (user.user_metadata ?? {}) as Record<string, unknown>
-      if (typeof meta.given_name === 'string') setFirstName(meta.given_name)
-      if (typeof meta.family_name === 'string') setLastName(meta.family_name)
+      setFirstName(row?.first_name ?? (typeof meta.given_name === 'string' ? meta.given_name : ''))
+      setLastName(row?.last_name ?? (typeof meta.family_name === 'string' ? meta.family_name : ''))
 
       setUserId(user.id)
       setEmail(user.email ?? '')
@@ -83,9 +111,11 @@ function CompleteForm() {
 
     setSaving(true)
     setError('')
-    const { errorKey } = await createAccountRows(supabase, {
-      userId, email, role, firstName, lastName, answers,
-    })
+    // A users row that exists but has no profile — a profile insert that
+    // failed once — must not be inserted again; only the profile is missing.
+    const { errorKey } = hasUserRow
+      ? await createProfileRow(supabase, { userId, role, answers })
+      : await createAccountRows(supabase, { userId, email, role, firstName, lastName, answers })
     if (errorKey) { setError(t(errorKey)); setSaving(false); return }
 
     clearPendingSignup()

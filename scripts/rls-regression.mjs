@@ -140,6 +140,12 @@ async function fixtures() {
     caregiverProfile: cgOfMatch,
     otherFamily: fams?.find(f => f.id !== famWithMatch?.id),
     admin: users?.find(isAdmin),
+    // One account holding BOTH profiles. None exists on the day this was
+    // written; the first one created through the UI arms PHASE 7.
+    dual: (users ?? []).find(u =>
+      !isAdmin(u)
+      && (fams ?? []).some(f => f.user_id === u.id)
+      && (cgs ?? []).some(c => c.user_id === u.id)),
   }
 }
 
@@ -650,6 +656,74 @@ async function phaseSourceSelects(fx) {
     pending.length === 0, `${pending.length} to fix before STEP 2 runs`)
 }
 
+// ---------------------------------------------------------------------------
+// PHASE 7 — one account, two profiles.
+//
+// The dangerous case in the whole two-profile model is one row: a Ruah report
+// written TO a household ABOUT a caregiver carries the caregiver's user id as
+// sender. A person who is a household on some matches and the caregiver on
+// others must not read the reports about herself, and the old policy —
+// "sender is me AND I am a family" — would have let her. 20260914000100 asks
+// about the match instead. This phase proves that on a real two-profile
+// account, and skips loudly rather than passing quietly when none exists.
+// ---------------------------------------------------------------------------
+
+async function phaseTwoProfiles(fx) {
+  section('PHASE 7 — one account, two profiles')
+
+  if (!fx.dual) {
+    check('SKIPPED — no non-admin account holds both profiles yet; add a second side through the UI to arm this phase', true)
+    return
+  }
+
+  const { client: c, userId } = await sessionFor(fx.dual.email)
+  const famId = fx.fams.find(f => f.user_id === userId)?.id
+  const cgId  = fx.cgs.find(cg => cg.user_id === userId)?.id
+
+  const self = await c.from('user_self').select('family_profile_id, caregiver_profile_id').single()
+  check('user_self carries both profile ids',
+    self.data?.family_profile_id === famId && self.data?.caregiver_profile_id === cgId,
+    JSON.stringify(self.data))
+
+  // Capability, not sign-up role: whichever side she registered as, both
+  // sides' reads must work. (Requires 20260914000100 — red before it runs.)
+  const open = await c.from('service_requests').select('id').eq('status', 'open').limit(1)
+  check('two-profile account reads OPEN requests as a caregiver (requires 20260914000100)',
+    !open.error, open.error?.message)
+  const own = await c.from('service_requests').select('id, family_id').eq('family_id', famId)
+  check('two-profile account reads its OWN requests as a household',
+    !own.error && (own.data ?? []).every(r => r.family_id === famId), own.error?.message)
+
+  // The row that matters. Reports about her: Ruah-authored, sender = her,
+  // receiver = someone else. She must get zero of them back.
+  const aboutHer = (fx.msgs ?? []).filter(m =>
+    m.sender_id === userId && m.receiver_id !== userId
+    && (m.sender_type === 'ruah' || m.is_ai === true))
+  if (aboutHer.length === 0) {
+    check('SKIPPED — no Ruah report about this account exists yet, so the leak cannot be exercised', true)
+  } else {
+    const r = await c.from('messages').select('id').in('id', aboutHer.map(m => m.id))
+    check(`two-profile account CANNOT read the ${aboutHer.length} Ruah report(s) written about her`,
+      !r.error && (r.data?.length ?? 0) === 0, `got ${r.data?.length ?? 0} rows`)
+  }
+
+  // …but on a match where she IS the household, outreach sent on her behalf
+  // (sender = her, Ruah-authored) must still show.
+  const herRequests = new Set((fx.reqs ?? []).filter(q => q.family_id === famId).map(q => q.id))
+  const herMatches = new Set((fx.matches ?? []).filter(m => herRequests.has(m.request_id)).map(m => m.id))
+  const onHerBehalf = (fx.msgs ?? []).filter(m =>
+    m.sender_id === userId && herMatches.has(m.match_id)
+    && (m.sender_type === 'ruah' || m.is_ai === true))
+  if (onHerBehalf.length === 0) {
+    check('SKIPPED — no outreach on this account\'s behalf exists yet', true)
+  } else {
+    const r = await c.from('messages').select('id').in('id', onHerBehalf.map(m => m.id))
+    check('two-profile account CAN read outreach Ruah sent on her behalf as a household',
+      !r.error && (r.data?.length ?? 0) === onHerBehalf.length,
+      `got ${r.data?.length ?? 0} of ${onHerBehalf.length}`)
+  }
+}
+
 async function main() {
   const fx = await fixtures()
   if (!fx.family || !fx.caregiver) {
@@ -663,6 +737,7 @@ async function main() {
     await phaseAdmin(fx)
     await phaseColumnGrants(fx)
     await phaseSourceSelects(fx)
+    await phaseTwoProfiles(fx)
   } finally {
     await sweepProbeRows()
     console.log(results.join('\n'))
