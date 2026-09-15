@@ -50,3 +50,8 @@ next-env.d.ts
 # claude code
 .claude/settings.local.json
 .claude/worktrees/
+
+# Google OAuth client downloads — never in git. One was swept in by `git add -A`
+# on 2026-09-14 and caught by push protection.
+client_secret_*.json
+*.apps.googleusercontent.com.json
